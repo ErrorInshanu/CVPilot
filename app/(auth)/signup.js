@@ -13,11 +13,103 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { ENDPOINTS } from "../../constants/api";
 import { colors, radii, shadows, spacing, typography } from "../../constants/theme";
 
+// ─── Toast Component ──────────────────────────────────────────────────────────
+function Toast({ message, type, visible }) {
+  const translateY = useRef(new Animated.Value(-80)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 380,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: -80,
+          duration: 300,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  const isSuccess = type === "success";
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        toastStyles.wrap,
+        isSuccess ? toastStyles.success : toastStyles.error,
+        { transform: [{ translateY }], opacity },
+      ]}
+    >
+      <Ionicons
+        name={isSuccess ? "checkmark-circle" : "alert-circle"}
+        size={18}
+        color={isSuccess ? "#4ADE80" : "#EF5350"}
+      />
+      <Text style={toastStyles.text}>{message}</Text>
+    </Animated.View>
+  );
+}
+
+const toastStyles = StyleSheet.create({
+  wrap: {
+    position: "absolute",
+    top: Platform.OS === "android" ? 48 : 56,
+    left: 24,
+    right: 24,
+    zIndex: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  success: {
+    backgroundColor: "rgba(74,222,128,0.08)",
+    borderColor: "rgba(74,222,128,0.25)",
+  },
+  error: {
+    backgroundColor: "rgba(239,83,80,0.08)",
+    borderColor: "rgba(239,83,80,0.25)",
+  },
+  text: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+  },
+});
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function SignUp() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
@@ -26,15 +118,33 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
-
   const [focusedField, setFocusedField] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Inline errors
+  const [errors, setErrors] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  // Toast
+  const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 3000);
+  };
+
+  const clearError = (field) => {
+    if (errors[field]) setErrors((e) => ({ ...e, [field]: "" }));
+  };
 
   // Entrance animations
   const logoAnim = useRef(new Animated.Value(0)).current;
   const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-
-  // Press scales
   const createScale = useRef(new Animated.Value(1)).current;
   const googleScale = useRef(new Animated.Value(1)).current;
 
@@ -76,13 +186,11 @@ export default function SignUp() {
     inputRange: [0, 1],
     outputRange: [20, 0],
   });
-
   const formOpacity = formAnim;
   const formTranslateY = formAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [24, 0],
   });
-
   const footerOpacity = footerAnim;
   const footerTranslateY = footerAnim.interpolate({
     inputRange: [0, 1],
@@ -109,6 +217,82 @@ export default function SignUp() {
 
   const isFocused = (field) => focusedField === field;
 
+  // ── Validation ─────────────────────────────────────────────────────────────
+  const validate = () => {
+    const newErrors = { fullName: "", email: "", password: "", confirmPassword: "" };
+    let valid = true;
+
+    if (!fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+      valid = false;
+    } else if (fullName.trim().length < 2) {
+      newErrors.fullName = "Name must be at least 2 characters";
+      valid = false;
+    }
+
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+      valid = false;
+    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+      newErrors.email = "Enter a valid email address";
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+      valid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      valid = false;
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+      valid = false;
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
+  // ── Signup API Call ─────────────────────────────────────────────────────────
+  const handleSignUp = async () => {
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(ENDPOINTS.signup, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName.trim(),
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(data.message || "Signup failed", "error");
+        return;
+      }
+
+      // TODO: Save token to AsyncStorage here
+      // await AsyncStorage.setItem("token", data.token);
+
+      showToast("Account created! Please sign in.", "success");
+setTimeout(() => router.replace("/sign-in"), 1000);
+    } catch (error) {
+      showToast("Network error. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.root}>
       {/* Background */}
@@ -116,6 +300,9 @@ export default function SignUp() {
       <View style={styles.glowA} />
       <View style={styles.glowB} />
       <View style={styles.vignette} />
+
+      {/* Toast */}
+      <Toast message={toast.message} type={toast.type} visible={toast.visible} />
 
       <SafeAreaView style={styles.safeTop} />
 
@@ -140,11 +327,11 @@ export default function SignUp() {
             ]}
           >
             <View style={styles.logoMark}>
-            <Image
-    source={require("../../assets/images/cvlogoo.png")}
-    style={{ width: 36, height: 36 }}
-    resizeMode="contain"
-/>
+              <Image
+                source={require("../../assets/images/cvlogoo.png")}
+                style={{ width: 36, height: 36 }}
+                resizeMode="contain"
+              />
             </View>
             <Text style={styles.brandText}>CVPilot</Text>
             <Text style={styles.welcomeText}>Create Account</Text>
@@ -163,50 +350,47 @@ export default function SignUp() {
               },
             ]}
           >
-            {/* Full Name */}
             <Field
               label="Full Name"
               icon="person-outline"
               placeholder="John Doe"
               value={fullName}
-              onChangeText={setFullName}
+              onChangeText={(v) => { setFullName(v); clearError("fullName"); }}
               focused={isFocused("name")}
               onFocus={() => setFocusedField("name")}
               onBlur={() => setFocusedField(null)}
               autoCapitalize="words"
+              error={errors.fullName}
             />
 
-            {/* Email */}
             <Field
               label="Email"
               icon="mail-outline"
               placeholder="you@example.com"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(v) => { setEmail(v); clearError("email"); }}
               focused={isFocused("email")}
               onFocus={() => setFocusedField("email")}
               onBlur={() => setFocusedField(null)}
               keyboardType="email-address"
               autoCapitalize="none"
+              error={errors.email}
             />
 
-            {/* Password */}
             <Field
               label="Password"
               icon="lock-closed-outline"
               placeholder="••••••••"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(v) => { setPassword(v); clearError("password"); }}
               focused={isFocused("password")}
               onFocus={() => setFocusedField("password")}
               onBlur={() => setFocusedField(null)}
               secureTextEntry={!passwordVisible}
               autoCapitalize="none"
+              error={errors.password}
               rightIcon={
-                <Pressable
-                  onPress={() => setPasswordVisible((v) => !v)}
-                  hitSlop={8}
-                >
+                <Pressable onPress={() => setPasswordVisible((v) => !v)} hitSlop={8}>
                   <Ionicons
                     name={passwordVisible ? "eye-outline" : "eye-off-outline"}
                     size={18}
@@ -216,23 +400,20 @@ export default function SignUp() {
               }
             />
 
-            {/* Confirm Password */}
             <Field
               label="Confirm Password"
               icon="shield-checkmark-outline"
               placeholder="••••••••"
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(v) => { setConfirmPassword(v); clearError("confirmPassword"); }}
               focused={isFocused("confirm")}
               onFocus={() => setFocusedField("confirm")}
               onBlur={() => setFocusedField(null)}
               secureTextEntry={!confirmVisible}
               autoCapitalize="none"
+              error={errors.confirmPassword}
               rightIcon={
-                <Pressable
-                  onPress={() => setConfirmVisible((v) => !v)}
-                  hitSlop={8}
-                >
+                <Pressable onPress={() => setConfirmVisible((v) => !v)} hitSlop={8}>
                   <Ionicons
                     name={confirmVisible ? "eye-outline" : "eye-off-outline"}
                     size={18}
@@ -246,7 +427,8 @@ export default function SignUp() {
             <Pressable
               onPressIn={() => handlePressIn(createScale)}
               onPressOut={() => handlePressOut(createScale)}
-              onPress={() => router.replace("/home")}
+              onPress={handleSignUp}
+              disabled={loading}
               accessibilityRole="button"
               accessibilityLabel="Create Account"
             >
@@ -254,9 +436,12 @@ export default function SignUp() {
                 style={[
                   styles.createBtn,
                   { transform: [{ scale: createScale }] },
+                  loading && styles.createBtnDisabled,
                 ]}
               >
-                <Text style={styles.createBtnText}>Create Account</Text>
+                <Text style={styles.createBtnText}>
+                  {loading ? "Creating Account..." : "Create Account"}
+                </Text>
               </Animated.View>
             </Pressable>
 
@@ -324,29 +509,26 @@ export default function SignUp() {
   );
 }
 
-// ─── Reusable Field Component ───────────────────────────────────────────────
+// ─── Reusable Field Component ─────────────────────────────────────────────────
 function Field({
-  label,
-  icon,
-  placeholder,
-  value,
-  onChangeText,
-  focused,
-  onFocus,
-  onBlur,
-  secureTextEntry,
-  keyboardType,
-  autoCapitalize,
-  rightIcon,
+  label, icon, placeholder, value, onChangeText,
+  focused, onFocus, onBlur, secureTextEntry,
+  keyboardType, autoCapitalize, rightIcon, error,
 }) {
   return (
     <View style={fieldStyles.group}>
       <Text style={fieldStyles.label}>{label}</Text>
-      <View style={[fieldStyles.inputWrap, focused && fieldStyles.inputWrapFocused]}>
+      <View
+        style={[
+          fieldStyles.inputWrap,
+          focused && fieldStyles.inputWrapFocused,
+          error ? fieldStyles.inputWrapError : null,
+        ]}
+      >
         <Ionicons
           name={icon}
           size={18}
-          color={focused ? colors.accentGreen : colors.inputIconDefault}
+          color={error ? "#EF5350" : focused ? colors.accentGreen : colors.inputIconDefault}
           style={fieldStyles.inputIcon}
         />
         <TextInput
@@ -364,14 +546,13 @@ function Field({
         />
         {rightIcon ?? null}
       </View>
+      {error ? <Text style={fieldStyles.inlineError}>{error}</Text> : null}
     </View>
   );
 }
 
 const fieldStyles = StyleSheet.create({
-  group: {
-    gap: spacing.xs,
-  },
+  group: { gap: 6 },
   label: {
     fontSize: typography.md,
     fontWeight: "600",
@@ -392,195 +573,98 @@ const fieldStyles = StyleSheet.create({
     borderColor: colors.inputFocusBorder45,
     backgroundColor: colors.inputFocusBg04,
   },
-  inputIcon: {
-    marginRight: spacing.sm,
+  inputWrapError: {
+    borderColor: "rgba(239,83,80,0.5)",
+    backgroundColor: "rgba(239,83,80,0.04)",
   },
+  inputIcon: { marginRight: spacing.sm },
   input: {
     flex: 1,
     fontSize: typography.base,
     color: colors.white,
     letterSpacing: typography.letterSpacingMd,
   },
+  inlineError: {
+    fontSize: 11.5,
+    color: "#EF5350",
+    letterSpacing: 0.2,
+    marginTop: 2,
+  },
 });
 
-// ─── Screen Styles ───────────────────────────────────────────────────────────
+// ─── Screen Styles ────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  root: {
-    flex: 1,
-    backgroundColor: colors.bgRoot,
-  },
-  bgBase: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.bgBase,
-  },
+  root: { flex: 1, backgroundColor: colors.bgRoot },
+  bgBase: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.bgBase },
   glowA: {
-    position: "absolute",
-    left: -100,
-    top: -120,
-    width: 340,
-    height: 340,
-    borderRadius: 170,
-    backgroundColor: colors.accentGreenGlow,
-    opacity: 0.13,
+    position: "absolute", left: -100, top: -120,
+    width: 340, height: 340, borderRadius: 170,
+    backgroundColor: colors.accentGreenGlow, opacity: 0.13,
   },
   glowB: {
-    position: "absolute",
-    right: -120,
-    bottom: -140,
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: colors.accentTealGlow,
-    opacity: 0.09,
+    position: "absolute", right: -120, bottom: -140,
+    width: 400, height: 400, borderRadius: 200,
+    backgroundColor: colors.accentTealGlow, opacity: 0.09,
   },
-  vignette: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.vignette,
-    opacity: 0.38,
-  },
-  safeTop: {
-    height: Platform.OS === "android" ? 12 : 0,
-  },
-  safeBottom: {
-    height: Platform.OS === "android" ? 16 : 0,
-  },
+  vignette: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.vignette, opacity: 0.38 },
+  safeTop: { height: Platform.OS === "android" ? 12 : 0 },
+  safeBottom: { height: Platform.OS === "android" ? 16 : 0 },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: spacing["3xl"],
     paddingTop: spacing["7xl"],
     paddingBottom: spacing["5xl"],
   },
-
-  // Logo block
-  logoBlock: {
-    alignItems: "center",
-    marginBottom: spacing["5xl"],
-  },
+  logoBlock: { alignItems: "center", marginBottom: spacing["5xl"] },
   logoMark: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.mintBg09,
-    borderWidth: 1,
-    borderColor: colors.mintBorder24,
-    marginBottom: spacing.lg,
-    overflow: "hidden",   // 👈 add this
-
+    width: 52, height: 52, borderRadius: radii.sm,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: colors.mintBg09, borderWidth: 1,
+    borderColor: colors.mintBorder24, marginBottom: spacing.lg, overflow: "hidden",
   },
   brandText: {
-    fontSize: typography.brandAuth,
-    fontWeight: "800",
-    letterSpacing: typography.letterSpacingMd,
-    color: colors.brandMintText,
-    marginBottom: spacing.xs,
+    fontSize: typography.brandAuth, fontWeight: "800",
+    letterSpacing: typography.letterSpacingMd, color: colors.brandMintText, marginBottom: spacing.xs,
   },
-  welcomeText: {
-    fontSize: typography.xl,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 6,
-  },
+  welcomeText: { fontSize: typography.xl, fontWeight: "700", color: colors.white, marginBottom: 6 },
   subtitleText: {
-    fontSize: typography.md,
-    color: colors.textWhite45,
-    letterSpacing: typography.letterSpacingMd,
-    textAlign: "center",
+    fontSize: typography.md, color: colors.textWhite45,
+    letterSpacing: typography.letterSpacingMd, textAlign: "center",
   },
-
-  // Card
   card: {
-    backgroundColor: colors.cardBg04,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.cardBorder07,
-    padding: spacing["2xl"],
-    gap: spacing.xl,
+    backgroundColor: colors.cardBg04, borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.cardBorder07,
+    padding: spacing["2xl"], gap: spacing.xl,
   },
-
-  // Create Account button
   createBtn: {
-    height: 52,
-    borderRadius: radii.md,
-    backgroundColor: colors.accentGreen,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadows.greenButtonCompact,
+    height: 52, borderRadius: radii.md, backgroundColor: colors.accentGreen,
+    alignItems: "center", justifyContent: "center", ...shadows.greenButtonCompact,
   },
+  createBtnDisabled: { opacity: 0.6 },
   createBtnText: {
-    fontSize: typography.lg,
-    fontWeight: "700",
-    color: colors.bgRoot,
-    letterSpacing: typography.letterSpacingXl,
+    fontSize: typography.lg, fontWeight: "700",
+    color: colors.bgRoot, letterSpacing: typography.letterSpacingXl,
   },
-
-  // Divider
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.cardBorder07,
-  },
-  dividerText: {
-    fontSize: typography.sm,
-    color: colors.textWhite30,
-    letterSpacing: typography.letterSpacingMd,
-  },
-
-  // Google button
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.cardBorder07 },
+  dividerText: { fontSize: typography.sm, color: colors.textWhite30, letterSpacing: typography.letterSpacingMd },
   googleBtn: {
-    height: 52,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.googleBorder10,
-    backgroundColor: colors.cardBg04,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
+    height: 52, borderRadius: radii.md, borderWidth: 1,
+    borderColor: colors.googleBorder10, backgroundColor: colors.cardBg04,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm,
   },
   googleBtnText: {
-    fontSize: typography.base,
-    fontWeight: "600",
-    color: colors.textWhite75,
-    letterSpacing: typography.letterSpacingMd,
+    fontSize: typography.base, fontWeight: "600",
+    color: colors.textWhite75, letterSpacing: typography.letterSpacingMd,
   },
-
-  // Footer
-  footer: {
-    alignItems: "center",
-    marginTop: spacing["4xl"],
-    gap: spacing.md,
-  },
-  signInRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  footerText: {
-    fontSize: typography.md,
-    color: colors.textWhite40,
-  },
-  footerLink: {
-    fontSize: typography.md,
-    fontWeight: "700",
-    color: colors.accentGreen,
-  },
+  footer: { alignItems: "center", marginTop: spacing["4xl"], gap: spacing.md },
+  signInRow: { flexDirection: "row", alignItems: "center" },
+  footerText: { fontSize: typography.md, color: colors.textWhite40 },
+  footerLink: { fontSize: typography.md, fontWeight: "700", color: colors.accentGreen },
   termsText: {
-    fontSize: typography.xs,
-    color: colors.textWhite30,
-    textAlign: "center",
-    lineHeight: 18,
-    letterSpacing: typography.letterSpacingMd,
-    paddingHorizontal: spacing["3xl"],
+    fontSize: typography.xs, color: colors.textWhite30, textAlign: "center",
+    lineHeight: 18, letterSpacing: typography.letterSpacingMd, paddingHorizontal: spacing["3xl"],
   },
-  termsLink: {
-    color: colors.textWhite55,
-    fontWeight: "600",
-  },
+  termsLink: { color: colors.textWhite55, fontWeight: "600" },
 });

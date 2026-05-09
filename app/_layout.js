@@ -1,6 +1,46 @@
-import { Stack } from "expo-router";
+import {
+    Stack,
+    usePathname,
+    useRouter,
+} from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthProvider } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+function AuthGate() {
+    const { isAuthenticated, isLoading } = useAuth();
+    const pathname = usePathname();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isLoading) return;
+
+        SplashScreen.hideAsync().catch(() => {});
+
+        const isPublic =
+            pathname === "/" ||
+            pathname === "/sign-in" ||
+            pathname === "/signup";
+
+        if (isAuthenticated) {
+            if (isPublic) {
+                router.replace("/home");
+            }
+            return;
+        }
+
+        if (!isPublic) {
+            router.replace("/sign-in");
+        }
+    }, [isAuthenticated, isLoading, pathname, router]);
+
+    return <Stack screenOptions={{ headerShown: false }} />;
+}
 
 /**
  * Root stack: Splash (/) · Auth `(auth)` · Main shell `(drawer)`.
@@ -9,7 +49,9 @@ export default function RootLayout() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
-                <Stack screenOptions={{ headerShown: false }} />
+                <AuthProvider>
+                    <AuthGate />
+                </AuthProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>
     );

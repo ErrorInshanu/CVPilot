@@ -1,9 +1,11 @@
-import { StyleSheet, View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppHeader } from "../../components/AppHeader";
 import { theme } from "../../constants/theme";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function LogoutScreen() {
+    const { signOut } = useAuth();
     return (
         <View style={styles.shell}>
             <AppHeader title="Logout" />
@@ -18,7 +20,10 @@ export default function LogoutScreen() {
                             styles.btn,
                             pressed && styles.btnPressed,
                         ]}
-                        onPress={() => router.replace("/sign-in")}
+                        onPress={async () => {
+                            await signOut();
+                            router.replace("/sign-in");
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel="Confirm sign out"
                     >
