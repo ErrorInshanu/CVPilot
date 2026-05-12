@@ -33,6 +33,7 @@ export default function TabsLayout() {
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="home-outline" size={size} color={color} />
                     ),
+                    headerShown: false,
                 }}
             />
             <Tabs.Screen
