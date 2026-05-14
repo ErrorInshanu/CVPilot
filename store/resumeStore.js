@@ -16,6 +16,7 @@ const emptyResume = {
     phone: "",
     location: "",
     linkedin: "",
+    github: "",
     website: "",
     summary: "",
   },
