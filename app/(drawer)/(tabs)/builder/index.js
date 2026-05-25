@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -53,14 +54,6 @@ const SECTIONS = [
     sublabel: "Personal and academic projects",
     icon: "code-slash-outline",
     color: "#34D399",
-    required: false,
-  },
-  {
-    id: "internships",
-    label: "Internships",
-    sublabel: "Internship experience",
-    icon: "business-outline",
-    color: "#F472B6",
     required: false,
   },
   {
@@ -142,8 +135,6 @@ function getSectionStatus(sectionId, resume) {
       return resume.skills?.length > 0;
     case "projects":
       return resume.projects?.length > 0;
-    case "internships":
-      return resume.internships?.length > 0;
     case "certifications":
       return resume.certifications?.length > 0;
     case "achievements":
@@ -213,12 +204,9 @@ function SectionRow({ section, isComplete, index, masterAnim, onPress }) {
         onPress={onPress}
       >
         <View style={styles.sectionRow}>
-          {/* Icon */}
           <View style={[styles.sectionIcon, { backgroundColor: `${section.color}18` }]}>
             <Ionicons name={section.icon} size={20} color={section.color} />
           </View>
-
-          {/* Labels */}
           <View style={styles.sectionMeta}>
             <View style={styles.sectionLabelRow}>
               <Text style={styles.sectionLabel}>{section.label}</Text>
@@ -230,8 +218,6 @@ function SectionRow({ section, isComplete, index, masterAnim, onPress }) {
             </View>
             <Text style={styles.sectionSublabel}>{section.sublabel}</Text>
           </View>
-
-          {/* Status */}
           {isComplete ? (
             <View style={styles.completedIcon}>
               <Ionicons name="checkmark-circle" size={22} color={theme.colors.accentGreen} />
@@ -248,10 +234,21 @@ function SectionRow({ section, isComplete, index, masterAnim, onPress }) {
 // ─── Main Builder Screen ──────────────────────────────────────────────────────
 export default function BuilderScreen() {
   const router = useRouter();
-  const { activeResume, createNewResume } = useResumeStore();
-  const [resumeTitle, setResumeTitle] = useState(
-    activeResume?.meta?.title || "My Resume"
+  const { createNewResume } = useResumeStore();
+
+  // ✅ FIX 1 — read fresh from store on every render
+  const [, forceUpdate] = useState(0);
+
+  // ✅ FIX 2 — re-read store every time this screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      forceUpdate((n) => n + 1);
+    }, [])
   );
+
+  // ✅ FIX 3 — always read fresh activeResume directly from store (not stale hook)
+  const activeResume = useResumeStore.getState().activeResume;
+  const resumeTitle = activeResume?.meta?.title || "My Resume";
 
   const completedCount = getCompletionCount(activeResume);
   const totalSections = SECTIONS.length;
@@ -261,8 +258,6 @@ export default function BuilderScreen() {
   const headerAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const sectionsAnim = useRef(new Animated.Value(0)).current;
-
-  // Individual section anims
   const sectionAnims = useRef(SECTIONS.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
@@ -309,7 +304,6 @@ export default function BuilderScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Background */}
       <View style={styles.bgBase} />
       <View style={styles.glowA} />
       <View style={styles.vignette} />
@@ -337,7 +331,6 @@ export default function BuilderScreen() {
             </Pressable>
           </View>
 
-          {/* Resume title */}
           <View style={styles.resumeTitleWrap}>
             <Ionicons name="document-text-outline" size={16} color={theme.colors.textWhite40} />
             <Text style={styles.resumeTitleText}>{resumeTitle}</Text>
@@ -361,12 +354,11 @@ export default function BuilderScreen() {
           </Text>
         </Animated.View>
 
-        {/* ── Required sections label ── */}
+        {/* ── Required Sections ── */}
         <Animated.View style={animStyle(sectionsAnim)}>
           <Text style={styles.groupLabel}>Required Sections</Text>
         </Animated.View>
 
-        {/* ── Required sections ── */}
         <View style={styles.sectionsWrap}>
           {SECTIONS.filter((s) => s.required).map((section, index) => (
             <SectionRow
@@ -380,14 +372,13 @@ export default function BuilderScreen() {
           ))}
         </View>
 
-        {/* ── Optional sections label ── */}
+        {/* ── Optional Sections ── */}
         <Text style={[styles.groupLabel, { marginTop: theme.spacing.xl }]}>
           Optional Sections
         </Text>
 
-        {/* ── Optional sections ── */}
         <View style={styles.sectionsWrap}>
-          {SECTIONS.filter((s) => !s.required).map((section, index) => {
+          {SECTIONS.filter((s) => !s.required).map((section) => {
             const globalIndex = SECTIONS.findIndex((s) => s.id === section.id);
             return (
               <SectionRow
@@ -402,7 +393,7 @@ export default function BuilderScreen() {
           })}
         </View>
 
-        {/* ── Bottom actions ── */}
+        {/* ── Bottom Actions ── */}
         <View style={styles.bottomActions}>
           <Pressable
             style={styles.previewFullBtn}
@@ -414,9 +405,7 @@ export default function BuilderScreen() {
 
           <Pressable
             style={styles.newResumeBtn}
-            onPress={() => {
-              createNewResume();
-            }}
+            onPress={() => createNewResume()}
           >
             <Ionicons name="add-outline" size={18} color={theme.colors.textWhite60} />
             <Text style={styles.newResumeBtnText}>New Resume</Text>
@@ -429,29 +418,14 @@ export default function BuilderScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: theme.colors.bgRoot,
-  },
-  bgBase: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.colors.bgBase,
-  },
+  root: { flex: 1, backgroundColor: theme.colors.bgRoot },
+  bgBase: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.colors.bgBase },
   glowA: {
-    position: "absolute",
-    right: -100,
-    top: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: theme.colors.accentGreenGlow,
-    opacity: 0.08,
+    position: "absolute", right: -100, top: -80,
+    width: 280, height: 280, borderRadius: 140,
+    backgroundColor: theme.colors.accentGreenGlow, opacity: 0.08,
   },
-  vignette: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.colors.vignette,
-    opacity: 0.3,
-  },
+  vignette: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.colors.vignette, opacity: 0.3 },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: theme.spacing["3xl"],
@@ -459,213 +433,96 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     gap: theme.spacing.md,
   },
-
-  // Header
-  header: {
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xs,
-  },
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-  },
+  header: { gap: theme.spacing.md, marginBottom: theme.spacing.xs },
+  headerTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: theme.colors.white,
-    letterSpacing: theme.typography.letterSpacingMd,
+    fontSize: 22, fontWeight: "800",
+    color: theme.colors.white, letterSpacing: theme.typography.letterSpacingMd,
   },
   headerSub: {
-    fontSize: theme.typography.md,
-    color: theme.colors.textWhite40,
-    marginTop: 3,
-    letterSpacing: theme.typography.letterSpacingMd,
+    fontSize: theme.typography.md, color: theme.colors.textWhite40,
+    marginTop: 3, letterSpacing: theme.typography.letterSpacingMd,
   },
   previewBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingVertical: 7,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.radii.sm,
-    borderWidth: 1,
-    borderColor: "rgba(74,222,128,0.3)",
-    backgroundColor: "rgba(74,222,128,0.08)",
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingVertical: 7, paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radii.sm, borderWidth: 1,
+    borderColor: "rgba(74,222,128,0.3)", backgroundColor: "rgba(74,222,128,0.08)",
   },
-  previewBtnText: {
-    fontSize: theme.typography.sm,
-    fontWeight: "600",
-    color: theme.colors.accentGreen,
-  },
+  previewBtnText: { fontSize: theme.typography.sm, fontWeight: "600", color: theme.colors.accentGreen },
   resumeTitleWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: theme.colors.cardBg04,
-    borderRadius: theme.radii.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder07,
-    paddingVertical: 10,
-    paddingHorizontal: theme.spacing.md,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: theme.colors.cardBg04, borderRadius: theme.radii.sm,
+    borderWidth: 1, borderColor: theme.colors.cardBorder07,
+    paddingVertical: 10, paddingHorizontal: theme.spacing.md,
   },
   resumeTitleText: {
-    flex: 1,
-    fontSize: theme.typography.md,
-    color: theme.colors.textWhite60,
-    letterSpacing: theme.typography.letterSpacingMd,
+    flex: 1, fontSize: theme.typography.md,
+    color: theme.colors.textWhite60, letterSpacing: theme.typography.letterSpacingMd,
   },
-
-  // Progress card
   progressCard: {
-    backgroundColor: theme.colors.cardBg04,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder07,
-    padding: theme.spacing["2xl"],
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
+    backgroundColor: theme.colors.cardBg04, borderRadius: theme.radii.lg,
+    borderWidth: 1, borderColor: theme.colors.cardBorder07,
+    padding: theme.spacing["2xl"], gap: theme.spacing.xs, marginBottom: theme.spacing.xs,
   },
-  progressTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  progressLabel: {
-    fontSize: theme.typography.md,
-    fontWeight: "600",
-    color: theme.colors.textWhite60,
-  },
-  progressPercent: {
-    fontSize: theme.typography.lg,
-    fontWeight: "800",
-    color: theme.colors.accentGreen,
-  },
+  progressTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  progressLabel: { fontSize: theme.typography.md, fontWeight: "600", color: theme.colors.textWhite60 },
+  progressPercent: { fontSize: theme.typography.lg, fontWeight: "800", color: theme.colors.accentGreen },
   progressBarBg: {
-    height: 6,
-    borderRadius: 3,
+    height: 6, borderRadius: 3,
     backgroundColor: "rgba(255,255,255,0.07)",
-    overflow: "hidden",
-    marginVertical: 4,
+    overflow: "hidden", marginVertical: 4,
   },
-  progressBarFill: {
-    height: "100%",
-    borderRadius: 3,
-    backgroundColor: theme.colors.accentGreen,
-  },
+  progressBarFill: { height: "100%", borderRadius: 3, backgroundColor: theme.colors.accentGreen },
   progressSub: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textWhite40,
+    fontSize: theme.typography.sm, color: theme.colors.textWhite40,
     letterSpacing: theme.typography.letterSpacingMd,
   },
-
-  // Group label
   groupLabel: {
-    fontSize: theme.typography.sm,
-    fontWeight: "700",
-    color: theme.colors.textWhite40,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    marginBottom: theme.spacing.xs,
-    marginTop: theme.spacing.xs,
+    fontSize: theme.typography.sm, fontWeight: "700",
+    color: theme.colors.textWhite40, letterSpacing: 0.8,
+    textTransform: "uppercase", marginBottom: theme.spacing.xs, marginTop: theme.spacing.xs,
   },
-
-  // Sections
-  sectionsWrap: {
-    gap: theme.spacing.xs,
-  },
+  sectionsWrap: { gap: theme.spacing.xs },
   sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.md,
-    backgroundColor: theme.colors.cardBg04,
-    borderRadius: theme.radii.md,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder07,
-    padding: theme.spacing.lg,
+    flexDirection: "row", alignItems: "center", gap: theme.spacing.md,
+    backgroundColor: theme.colors.cardBg04, borderRadius: theme.radii.md,
+    borderWidth: 1, borderColor: theme.colors.cardBorder07, padding: theme.spacing.lg,
   },
-  sectionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radii.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionMeta: {
-    flex: 1,
-    gap: 3,
-  },
-  sectionLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
+  sectionIcon: { width: 40, height: 40, borderRadius: theme.radii.sm, alignItems: "center", justifyContent: "center" },
+  sectionMeta: { flex: 1, gap: 3 },
+  sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   sectionLabel: {
-    fontSize: theme.typography.base,
-    fontWeight: "700",
-    color: theme.colors.white,
-    letterSpacing: theme.typography.letterSpacingMd,
+    fontSize: theme.typography.base, fontWeight: "700",
+    color: theme.colors.white, letterSpacing: theme.typography.letterSpacingMd,
   },
   sectionSublabel: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textWhite40,
+    fontSize: theme.typography.sm, color: theme.colors.textWhite40,
     letterSpacing: theme.typography.letterSpacingMd,
   },
   requiredBadge: {
-    backgroundColor: "rgba(74,222,128,0.12)",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: "rgba(74,222,128,0.12)", borderRadius: 6,
+    paddingHorizontal: 6, paddingVertical: 2,
   },
-  requiredText: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: theme.colors.accentGreen,
-    letterSpacing: 0.3,
-  },
-  completedIcon: {
-    width: 22,
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  // Bottom actions
-  bottomActions: {
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.xl,
-  },
+  requiredText: { fontSize: 9, fontWeight: "700", color: theme.colors.accentGreen, letterSpacing: 0.3 },
+  completedIcon: { width: 22, height: 22, alignItems: "center", justifyContent: "center" },
+  bottomActions: { gap: theme.spacing.md, marginTop: theme.spacing.xl },
   previewFullBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: theme.spacing.xs,
-    height: 52,
-    borderRadius: theme.radii.md,
-    backgroundColor: theme.colors.accentGreen,
-    ...theme.shadows.greenButtonCompact,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: theme.spacing.xs, height: 52, borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.accentGreen, ...theme.shadows.greenButtonCompact,
   },
   previewFullBtnText: {
-    fontSize: theme.typography.lg,
-    fontWeight: "700",
-    color: theme.colors.bgRoot,
-    letterSpacing: theme.typography.letterSpacingXl,
+    fontSize: theme.typography.lg, fontWeight: "700",
+    color: theme.colors.bgRoot, letterSpacing: theme.typography.letterSpacingXl,
   },
   newResumeBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: theme.spacing.xs,
-    height: 48,
-    borderRadius: theme.radii.md,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder07,
-    backgroundColor: theme.colors.cardBg04,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: theme.spacing.xs, height: 48, borderRadius: theme.radii.md,
+    borderWidth: 1, borderColor: theme.colors.cardBorder07, backgroundColor: theme.colors.cardBg04,
   },
   newResumeBtnText: {
-    fontSize: theme.typography.base,
-    fontWeight: "600",
-    color: theme.colors.textWhite60,
-    letterSpacing: theme.typography.letterSpacingMd,
+    fontSize: theme.typography.base, fontWeight: "600",
+    color: theme.colors.textWhite60, letterSpacing: theme.typography.letterSpacingMd,
   },
 });
