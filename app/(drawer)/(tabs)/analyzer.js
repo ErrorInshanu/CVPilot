@@ -109,48 +109,63 @@ export default function AnalyzerScreen() {
             setError("Please upload a resume PDF first.");
             return;
         }
-
+    
         try {
             setAnalyzing(true);
             setError(null);
             setAnalysis(null);
-
-            // Read PDF as base64
+    
+            // Read PDF as base64 then decode to text
             const base64 = await FileSystem.readAsStringAsync(selectedFile.uri, {
                 encoding: "base64",
             });
-
+    
+            // Decode base64 to string to extract readable text
+            const decoded = atob(base64);
+            
+            // Extract readable ASCII text from PDF binary
+            const resumeText = decoded
+                .split("")
+                .filter(c => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127)
+                .join("")
+                .replace(/[^\x20-\x7E\n]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .substring(0, 8000); // Limit to 8000 chars for Groq
+    
+            if (!resumeText || resumeText.length < 50) {
+                throw new Error("Could not extract text from PDF. Please try a different file.");
+            }
+    
             // Send to backend
             const response = await fetch(ENDPOINTS.analyze, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    resumePdfBase64: base64,
+                    resumeText,
                     jobDescription: jobDescription.trim() || null,
                 }),
             });
-
+    
             const data = await response.json();
-
+    
             if (!response.ok || !data.success) {
                 throw new Error(data.message || "Analysis failed");
             }
-
+    
             setAnalysis(data.analysis);
-
-            // Animate results in
+    
             fadeAnim.setValue(0);
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 500,
                 useNativeDriver: true,
             }).start();
-
-            // Scroll to results
+    
             setTimeout(() => {
                 scrollRef.current?.scrollTo({ y: 400, animated: true });
             }, 300);
-
+    
         } catch (e) {
             setError(e.message || "Something went wrong. Please try again.");
         } finally {

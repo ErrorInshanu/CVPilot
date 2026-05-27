@@ -10,6 +10,7 @@
 - **Type:** AI-powered Resume Builder + Resume Analyzer
 - **Primary Users:** Students (all fields — CS, MBA, BBA, Arts, Commerce, Science)
 - **Current Version:** V1 (in development)
+- **Overall Progress:** ~85% complete
 
 ---
 
@@ -27,6 +28,8 @@
 - react-native-webview (for resume preview)
 - expo-print (for PDF export)
 - expo-sharing (for PDF sharing)
+- expo-document-picker (for PDF upload in analyzer)
+- expo-file-system/legacy (for reading PDF as base64)
 
 ### Backend
 - Node.js + Express.js
@@ -35,11 +38,13 @@
 - JWT Authentication (30 day tokens)
 - bcryptjs (password hashing)
 - dotenv, cors
+- Gemini API (Google) for ATS analysis
 
 ### Hosting
 - Backend deployed on Render
 - Live URL: https://cvpilot-backend-sxut.onrender.com
 - MongoDB Atlas cluster: cvpilot.ypbsh6v.mongodb.net
+- UptimeRobot set up to ping every 5 mins (prevents sleeping)
 
 ---
 
@@ -79,8 +84,6 @@ vignette: "#000"
 ---
 
 ## Folder Structure
-
-```
 CVPilot/
 ├── app/
 │   ├── (auth)/
@@ -92,54 +95,54 @@ CVPilot/
 │   │   │   ├── _layout.js
 │   │   │   ├── home.js
 │   │   │   ├── builder/
-│   │   │   │   ├── _layout.js        ← dynamic Stack, auto-registers all screens
-│   │   │   │   ├── index.js          ← Builder section list + progress bar
-│   │   │   │   ├── personal.js       ← Personal Info form
-│   │   │   │   ├── experience.js     ← Work Experience form
-│   │   │   │   ├── education.js      ← Education form
-│   │   │   │   ├── skills.js         ← Skills form (chip-based)
-│   │   │   │   ├── projects.js       ← Projects form
-│   │   │   │   ├── certifications.js ← Certifications form
-│   │   │   │   ├── achievements.js   ← Achievements form
-│   │   │   │   ├── extracurricular.js← Extracurricular form
-│   │   │   │   ├── volunteer.js      ← Volunteer Work form
-│   │   │   │   ├── publications.js   ← Publications form
-│   │   │   │   ├── languages.js      ← Languages form
-│   │   │   │   ├── training.js       ← Training & Workshops form
-│   │   │   │   ├── interests.js      ← Interests & Hobbies (chip-based)
-│   │   │   │   └── preview.js        ← Resume Preview (WebView + PDF export)
-│   │   │   ├── analyzer.js
-│   │   │   ├── templates.js
-│   │   │   └── profile.js
+│   │   │   │   ├── _layout.js
+│   │   │   │   ├── index.js
+│   │   │   │   ├── personal.js
+│   │   │   │   ├── experience.js
+│   │   │   │   ├── education.js
+│   │   │   │   ├── skills.js
+│   │   │   │   ├── projects.js
+│   │   │   │   ├── certifications.js
+│   │   │   │   ├── achievements.js
+│   │   │   │   ├── extracurricular.js
+│   │   │   │   ├── volunteer.js
+│   │   │   │   ├── publications.js
+│   │   │   │   ├── languages.js
+│   │   │   │   ├── training.js
+│   │   │   │   ├── interests.js
+│   │   │   │   └── preview.js
+│   │   │   ├── analyzer.js        ← ATS Analyzer (UI done, testing pending)
+│   │   │   ├── templates.js       ← Templates Screen (done)
+│   │   │   └── profile.js         ← Profile Screen (done)
 │   │   ├── _layout.js
 │   │   ├── logout.js
 │   │   ├── privacy-policy.js
-│   │   ├── saved-resumes.js          ← Saved Resumes screen (done)
+│   │   ├── saved-resumes.js
 │   │   ├── settings.js
 │   │   └── terms-of-service.js
 │   ├── _layout.js
-│   └── index.js                      ← Splash screen
+│   └── index.js
 ├── assets/
 │   └── images/
-│       └── cvlogoo.png               ← App logo (transparent PNG)
+│       └── cvlogoo.png
 ├── components/
 │   ├── AppHeader.js
 │   ├── MainDrawerContent.js
 │   └── PlaceholderScreenBody.js
 ├── constants/
-│   ├── api.js                        ← API endpoints
-│   └── theme.js                      ← Design system
+│   ├── api.js                     ← includes analyze endpoint
+│   ├── resumeTemplates.js         ← all 5 classic templates
+│   └── theme.js
 ├── context/
-│   └── AuthContext.js                ← Auth state, signIn, signOut
+│   └── AuthContext.js
 ├── hooks/
-│   └── useAuth.js                    ← useContext wrapper for AuthContext
+│   └── useAuth.js
 ├── services/
-│   ├── storage.js                    ← SecureStore helpers (TOKEN_KEY = "cvpilot_auth_token")
-│   ├── resumeService.js              ← Raw API calls (create, get, update, delete)
-│   └── resumeSyncService.js          ← High-level sync (load, save, delete from backend)
+│   ├── storage.js
+│   ├── resumeService.js
+│   └── resumeSyncService.js
 └── store/
-    └── resumeStore.js                ← Zustand resume store
-```
+└── resumeStore.js
 
 ---
 
@@ -165,27 +168,26 @@ CVPilot/
 ---
 
 ## Backend API Endpoints
-```
 POST   /api/auth/signup
 POST   /api/auth/login
 GET    /api/auth/me           ← protected
-
 POST   /api/resumes           ← create resume
 GET    /api/resumes           ← get all user resumes
 GET    /api/resumes/:id       ← get one resume
 PUT    /api/resumes/:id       ← update resume
 DELETE /api/resumes/:id       ← delete resume
-```
+POST   /api/analyze           ← Gemini ATS analyzer
 
 ### constants/api.js
 ```js
 export const API_BASE_URL = "https://cvpilot-backend-sxut.onrender.com";
 export const ENDPOINTS = {
-  signup: `${API_BASE_URL}/api/auth/signup`,
-  login:  `${API_BASE_URL}/api/auth/login`,
-  me:     `${API_BASE_URL}/api/auth/me`,
+  signup:  `${API_BASE_URL}/api/auth/signup`,
+  login:   `${API_BASE_URL}/api/auth/login`,
+  me:      `${API_BASE_URL}/api/auth/me`,
   resumes: `${API_BASE_URL}/api/resumes`,
-  resume: (id) => `${API_BASE_URL}/api/resumes/${id}`,
+  resume:  (id) => `${API_BASE_URL}/api/resumes/${id}`,
+  analyze: `${API_BASE_URL}/api/analyze`,
 };
 ```
 
@@ -197,143 +199,206 @@ export const ENDPOINTS = {
 ```js
 const emptyResume = {
   id: null,
-  meta: { title, templateId, themeColor, fontFamily },
+  meta: { title, templateId: "classic-clean", themeColor, fontFamily },
   personal: { fullName, jobTitle, email, phone, location, linkedin, github, website, summary },
-  experience: [],      // { id, company, role, location, startDate, endDate, current, description }
-  education: [],       // { id, institution, board, degree, field, startDate, endDate, current, grade, activities }
-  skills: [],          // { id, name, level: "beginner"|"intermediate"|"expert" }
-  projects: [],        // { id, title, role, organization, startDate, endDate, current, technologies, url, teamSize, description }
-  certifications: [],  // { id, name, issuer, issueDate, expiryDate, noExpiry, credentialId, credentialUrl }
-  languages: [],       // { id, name, proficiency: "basic"|"conversational"|"fluent" }
-  achievements: [],    // { id, title, issuer, date, description }
-  extracurricular: [], // { id, title, organization, role, startDate, endDate, description }
-  volunteer: [],       // { id, title, organization, role, startDate, endDate, description }
-  publications: [],    // { id, title, publisher, authors, date, url, description }
-  training: [],        // { id, title, organization, date, description }
-  interests: [],       // { id, name }
+  experience: [],
+  education: [],
+  skills: [],
+  projects: [],
+  certifications: [],
+  languages: [],
+  achievements: [],
+  extracurricular: [],
+  volunteer: [],
+  publications: [],
+  training: [],
+  interests: [],
   atsScore: null,
   lastAnalyzed: null,
 };
 ```
 
-### Store Actions Available
+### loadResume fix (IMPORTANT)
 ```js
-// Meta
-updateMeta(fields)
-
-// Personal
-updatePersonal(fields)
-
-// Experience
-addExperience(item), updateExperience(id, fields), removeExperience(id)
-
-// Education
-addEducation(item), updateEducation(id, fields), removeEducation(id)
-
-// Skills
-addSkill(item), removeSkill(id)
-
-// Projects
-addProject(item), updateProject(id, fields), removeProject(id)
-
-// Certifications
-addCertification(item), updateCertification(id, fields), removeCertification(id)
-
-// Interests
-updateInterests(items)  ← replaces entire array
-
-// Achievements
-addAchievement(item), updateAchievement(id, fields), removeAchievement(id)
-
-// Extracurricular
-addExtracurricular(item), updateExtracurricular(id, fields), removeExtracurricular(id)
-
-// Volunteer
-addVolunteer(item), updateVolunteer(id, fields), removeVolunteer(id)
-
-// Publications
-addPublication(item), updatePublication(id, fields), removePublication(id)
-
-// Training
-addTraining(item), updateTraining(id, fields), removeTraining(id)
-
-// Languages
-addLanguage(item), updateLanguage(id, fields), removeLanguage(id)
-
-// Resume list
-setResumes(list), addToResumes(resume), updateInResumes(id, updated), removeFromResumes(id)
-
-// State
-markSaved(), setSaving(val), setAtsScore(score)
-createNewResume(), loadResume(resume), resetStore()
+loadResume: (resume) => {
+    set({
+      activeResume: {
+        ...emptyResume,
+        ...resume,
+        meta: { ...emptyResume.meta, ...resume.meta },
+        personal: { ...emptyResume.personal, ...resume.personal },
+        experience: resume.experience ?? [],
+        education: resume.education ?? [],
+        skills: resume.skills ?? [],
+        projects: resume.projects ?? [],
+        certifications: resume.certifications ?? [],
+        languages: resume.languages ?? [],
+        achievements: resume.achievements ?? [],
+        extracurricular: resume.extracurricular ?? [],
+        volunteer: resume.volunteer ?? [],
+        publications: resume.publications ?? [],
+        training: resume.training ?? [],
+        interests: resume.interests ?? [],
+      },
+      isDirty: false,
+    });
+  },
 ```
 
 ---
 
-## Backend Connect — services/resumeSyncService.js
-```js
-loadResumesFromBackend()       // loads all resumes, sets activeResume to most recent
-saveActiveResumeToBackend()    // creates or updates active resume on backend
-deleteResumeFromBackend(id)    // deletes from backend + updates store
-createNewResumeOnBackend(title)// creates new resume on backend + navigates
-```
+## Templates System
 
-**How to call save in any builder screen:**
-```js
-import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
+### constants/resumeTemplates.js
+All templates live here. Single export: `getTemplate(templateId, resume)`
 
-// inside handleSave, after markSaved():
-saveActiveResumeToBackend();
-```
-
----
-
-## Builder Screens — Completed
-
-| Section | File | Type | Status |
+### 5 Classic Templates (DONE)
+| ID | Name | Style | Based On |
 |---|---|---|---|
-| Personal Info | personal.js | Form | ✅ Done |
-| Work Experience | experience.js | Cards | ✅ Done |
-| Education | education.js | Cards | ✅ Done |
-| Skills | skills.js | Chips + suggestions | ✅ Done |
-| Projects | projects.js | Cards | ✅ Done |
-| Certifications | certifications.js | Cards + suggestions | ✅ Done |
-| Achievements | achievements.js | Cards | ✅ Done |
-| Extracurricular | extracurricular.js | Cards | ✅ Done |
-| Volunteer Work | volunteer.js | Cards | ✅ Done |
-| Publications | publications.js | Cards | ✅ Done |
-| Languages | languages.js | Cards + proficiency | ✅ Done |
-| Training & Workshops | training.js | Cards | ✅ Done |
-| Interests & Hobbies | interests.js | Chips + suggestions | ✅ Done |
-| Resume Preview | preview.js | WebView + PDF | ✅ Done |
+| `classic-clean` | Classic Clean | Left name, grey banner headers, 2-col skills | Image 1 (Daniel Meyer) |
+| `classic-bold` | Classic Bold | Centered name, bold caps, full divider | Original preview.js template |
+| `classic-pro` | Classic Pro | Bold company+italic role, underline headers, pipe skills | Image 3 (Ahmed Hassan) |
+| `classic-compact` | Classic Compact | Centered name, icon contacts, dense layout | Image 5 (Lena Hoffmann) |
+| `classic-ats` | Classic ATS | Ultra-minimal, centered, title-case, Arial font | Image 2 (James White) |
+
+### Default template: `classic-clean`
+
+### Modern + Creative (10 templates) — NOT BUILT YET
+Coming in v1.1 update after Play Store launch.
+
+### preview.js
+```js
+const resume = useResumeStore.getState().activeResume;
+const templateId = resume?.meta?.templateId || "classic-clean";
+const html = getTemplate(templateId, resume);
+```
+
+---
+
+## ATS Analyzer
+
+### Backend Route
+`POST /api/analyze`
+- Accepts: `resumePdfBase64` (base64 string), `jobDescription` (optional string)
+- Uses: Gemini `gemini-2.0-flash` model
+- Returns: Full JSON analysis
+
+### Analysis Response Structure
+```json
+{
+  "atsScore": 78,
+  "verdict": "Good",
+  "verdictMessage": "One sentence summary",
+  "matchedKeywords": [],
+  "missingKeywords": [],
+  "grammarIssues": [{ "original": "", "suggestion": "", "reason": "" }],
+  "sectionFeedback": { "summary": "", "experience": "", "education": "", "skills": "", "overall": "" },
+  "improvements": [],
+  "whatToRemove": [],
+  "strengths": []
+}
+```
+
+### Frontend (analyzer.js)
+- User picks any PDF from phone via `expo-document-picker`
+- Reads as base64 via `expo-file-system/legacy`
+- Sends to backend `/api/analyze`
+- Shows: Score ring, strengths, keywords, section feedback, grammar issues, improvements, what to remove
+
+### Status
+- Backend route: ✅ Done
+- Frontend UI: ✅ Done
+- Testing: ⚠️ Pending (fix deployed — gemini-2.0-flash + 50mb payload limit)
+
+---
+
+## Backend — services/resumeSyncService.js
+
+### Key fixes applied
+- All fetch calls wrapped in inner try/catch
+- Null checks on store and resume
+- Array check: `Array.isArray(data) ? data : (data?.resumes ?? [])`
+
+```js
+// How to call save in any builder screen:
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
+saveActiveResumeToBackend(); // call after markSaved()
+```
+
+---
+
+## Builder Screens — All Complete ✅
+
+| Section | File | Status |
+|---|---|---|
+| Personal Info | personal.js | ✅ Done |
+| Work Experience | experience.js | ✅ Done |
+| Education | education.js | ✅ Done |
+| Skills | skills.js | ✅ Done |
+| Projects | projects.js | ✅ Done |
+| Certifications | certifications.js | ✅ Done |
+| Achievements | achievements.js | ✅ Done |
+| Extracurricular | extracurricular.js | ✅ Done |
+| Volunteer Work | volunteer.js | ✅ Done |
+| Publications | publications.js | ✅ Done |
+| Languages | languages.js | ✅ Done |
+| Training & Workshops | training.js | ✅ Done |
+| Interests & Hobbies | interests.js | ✅ Done |
+| Resume Preview | preview.js | ✅ Done |
+
+---
+
+## Screens Status
+
+| Screen | Status | Notes |
+|---|---|---|
+| Splash Screen | ✅ 100% | |
+| Sign In | ✅ 100% | |
+| Sign Up | ✅ 100% | |
+| Home Dashboard | 🔶 60% | Needs real data hookup |
+| Builder Index | ✅ 100% | |
+| All 13 Builder Sections | ✅ 100% | |
+| Resume Preview | ✅ 100% | |
+| Templates Screen | ✅ 100% | |
+| Analyzer Screen | ✅ 90% | Testing pending |
+| Profile Screen | ✅ 100% | |
+| Saved Resumes | ✅ 100% | |
+| Settings Screen | ❌ 0% | Placeholder only |
+| Logout | ✅ 100% | Via Profile screen |
+| Privacy Policy | ✅ 100% | |
+| Terms of Service | ✅ 100% | |
 
 ---
 
 ## Key Technical Decisions
 
 ### Builder Screens
-- **No maxHeight animation** — use conditional rendering for expandable cards
-- **handleRemove fix** — always call store action + markSaved() immediately on delete
-- **Chip screens** (skills, interests) — call store action immediately on chip remove, no need to press Save
-- **Card screens** (all others) — Save button syncs to store + backend
-- **Progress bar** — uses `useFocusEffect` + `forceUpdate` + `useResumeStore.getState()` for live updates
+- No maxHeight animation — use conditional rendering
+- handleRemove — always call store action + markSaved() immediately
+- Chip screens (skills, interests) — call store action immediately on remove
+- Card screens — Save button syncs to store + backend
+- Progress bar — uses useFocusEffect + forceUpdate + useResumeStore.getState()
 
 ### Navigation
-- Builder navigation: `router.push('/(drawer)/(tabs)/builder/${sectionId}')`
+- Builder: `router.push('/(drawer)/(tabs)/builder/${sectionId}')`
 - Drawer open: `navigation.dispatch(DrawerActions.openDrawer())`
-- Home screen header: custom (headerShown: false on home tab)
-- Builder _layout.js: dynamic Stack (no explicit screen names needed)
+
+### Import Paths
+- From `builder/`: `../../../../constants/theme`
+- From `builder/`: `../../../../store/resumeStore`
+- From `builder/`: `../../../../services/resumeSyncService`
+- From `(drawer)/`: `../../constants/theme`
+- From `(tabs)/`: `../../../constants/theme`
+- From `(tabs)/`: `../../../store/resumeStore`
+- From `(tabs)/`: `../../../services/resumeSyncService`
+- From `(tabs)/`: `../../../constants/api`
 
 ### Auth
 - Token key: `"cvpilot_auth_token"`
 - User key: `"cvpilot_auth_user"`
 
-### Import Paths
-- From `builder/` folder: `../../../../constants/theme`
-- From `builder/` folder: `../../../../store/resumeStore`
-- From `builder/` folder: `../../../../services/resumeSyncService`
-- From `(drawer)/` folder: `../../constants/theme`
-- From `(drawer)/` folder: `../../services/resumeSyncService`
+### Never use SafeAreaView from react-native
+Always use `react-native-safe-area-context`
 
 ---
 
@@ -345,206 +410,117 @@ saveActiveResumeToBackend();
 | Auth (Sign In/Up) | ✅ 100% |
 | Backend Auth APIs | ✅ 100% |
 | Backend Resume APIs | ✅ 100% |
+| Backend Analyzer API | ✅ 100% |
 | Backend Deployed (Render) | ✅ 100% |
+| UptimeRobot (keep alive) | ✅ 100% |
 | Session Persistence | ✅ 100% |
 | Theme System | ✅ 100% |
 | Navigation | ✅ 100% |
 | Zustand Store | ✅ 100% |
-| Home Dashboard | ✅ 90% (needs real data hookup) |
+| Home Dashboard | 🔶 60% |
 | Resume Builder UI — All 13 sections | ✅ 100% |
-| Resume Preview (Classic HTML template) | ✅ 100% |
-| PDF Export (expo-print + expo-sharing) | ✅ 100% |
+| Resume Preview | ✅ 100% |
+| PDF Export | ✅ 100% |
 | Backend Connect (save/load/delete) | ✅ 100% |
 | Saved Resumes Screen | ✅ 100% |
-| Templates Screen | ❌ 0% |
-| 15 Resume Templates | ❌ 0% |
-| ATS Analyzer | ❌ 0% |
-| Job Match | ❌ 0% |
-| AI Bullet Suggestions | ❌ 0% |
-| Profile Screen | ❌ 0% |
+| Auto-load resume on app open | ✅ 100% |
+| 5 Classic Templates | ✅ 100% |
+| Templates Screen | ✅ 100% |
+| Profile Screen | ✅ 100% |
+| ATS Analyzer UI | ✅ 90% |
+| Modern Templates (5) | ❌ 0% |
+| Creative Templates (5) | ❌ 0% |
 | Settings Screen | ❌ 0% |
-| Logout | ❌ 0% |
-| Auto-load resume on app open | ❌ 0% |
 | Play Store Prep | ❌ 0% |
 
-**Overall: ~70% complete**
+**Overall: ~85% complete**
 
 ---
 
-## What Needs to Be Built Next (In Order)
+## What Needs To Be Done Next (In Order)
 
-### 1. Auto-load Resume on App Open (15 mins)
-Add to `app/_layout.js` or `home.js`:
-```js
-import { loadResumesFromBackend } from "../services/resumeSyncService";
-useEffect(() => { loadResumesFromBackend(); }, []);
-```
+### 1. Test ATS Analyzer (First thing tomorrow)
+- Open app → Analyzer tab
+- Pick any resume PDF
+- Tap Analyze
+- Should work now with gemini-2.0-flash + 50mb limit fix
 
-### 2. Templates Screen + 15 Resume Templates
-Full details below ↓
+### 2. Home Screen Real Data Hookup
+- Show actual resume count
+- Show active resume name
+- Show completion percentage
+- Quick actions (Edit, Preview, Analyze)
 
-### 3. Profile Screen
-- Edit name, email, profile photo
-- Read from `AuthContext` user object
+### 3. Settings Screen
+- Theme toggle (future)
+- Notification preferences (future)
+- For now: just show app info + links
 
-### 4. Settings + Logout
-- Logout: call `signOut()` from `useAuth()`, then `router.replace("/sign-in")`
-- Settings: theme toggle, notifications
-
-### 5. ATS Analyzer (AI Feature)
-- User pastes job description
-- App compares resume vs job description
-- Shows ATS score, missing keywords, suggestions
-- Uses Claude API or OpenAI API
-
-### 6. Play Store Prep
+### 4. Play Store Prep
+- App icon (already have cvlogoo.png)
+- Splash screen
 - App signing
-- Privacy policy page (already in drawer)
-- Store listing, screenshots, icon
+- Store listing, screenshots
+- Privacy policy (already done)
 
----
-
-## Templates Plan (15 Total)
-
-### Approach
-- **HTML + CSS rendered in WebView** (same as current preview.js)
-- Same data from Zustand store, different HTML/CSS templates
-- PDF export works for all templates (expo-print)
-- User picks template in Templates Screen → stored in `activeResume.meta.templateId`
-
----
-
-### Category 1 — Classic (5 templates) — CS / IT / Engineering
-**No profile photo on any. Black/dark grey only. ATS-friendly.**
-
-| ID | Name | Style |
-|---|---|---|
-| `classic-clean` | Classic Clean | Single column, Georgia serif, centered header, minimal |
-| `classic-pro` | Classic Pro | Subtle grey header band, clean dividers |
-| `classic-bold` | Classic Bold | Strong typography, thick section title underlines |
-| `classic-compact` | Classic Compact | Dense layout, smaller font, fits more content |
-| `classic-ats` | Classic ATS | Ultra-minimal, zero design, pure ATS optimization |
-
----
-
-### Category 2 — Modern (5 templates) — MBA / BBA / Marketing / Sales
-**Optional profile photo. Color picker (5 colors). Two-column layouts.**
-
-| ID | Name | Style |
-|---|---|---|
-| `modern-sidebar` | Modern Sidebar | Two-column, color sidebar left, photo top of sidebar |
-| `modern-top` | Modern Top | Bold color header band, single column body |
-| `modern-card` | Modern Card | Sections in subtle cards, clean white space |
-| `modern-minimal` | Modern Minimal | Lots of whitespace, elegant thin typography |
-| `modern-bold` | Modern Bold | Strong color accents, section icons |
-
-**Color options per Modern template (stored in meta.themeColor):**
-- `#4ADE80` — Mint Green
-- `#60A5FA` — Ocean Blue
-- `#F472B6` — Rose Pink
-- `#FBBF24` — Amber Gold
-- `#A78BFA` — Soft Purple
-
----
-
-### Category 3 — Creative (5 templates) — Design / Arts / Media / HR
-**Profile photo included. Bold colors. Unique layouts.**
-
-| ID | Name | Style |
-|---|---|---|
-| `creative-splash` | Creative Splash | Full color header, large name, bold personality |
-| `creative-timeline` | Creative Timeline | Timeline-style experience section |
-| `creative-grid` | Creative Grid | Grid-based skills + two-column layout |
-| `creative-dark` | Creative Dark | Dark header background, light body |
-| `creative-portfolio` | Creative Portfolio | Portfolio-style, project-first layout |
-
----
-
-### Templates Screen UI Flow
-```
-Templates Screen
-├── Category Tabs: [Classic] [Modern] [Creative]
-├── Horizontal scroll of template thumbnail cards
-│   ├── Each card: mini preview image + template name
-│   └── Selected card has green border
-├── Color picker row (Modern + Creative only)
-├── Photo toggle (Modern + Creative only)
-└── [Use This Template] green button
-    └── saves templateId + themeColor to activeResume.meta
-        └── navigates to Preview screen
-```
-
----
-
-## ATS Analyzer Plan
-
-### What It Does
-1. User pastes job description
-2. App reads `activeResume` from Zustand
-3. Sends both to Claude API or OpenAI
-4. Returns:
-   - ATS Score (0-100)
-   - Missing keywords
-   - Matched keywords
-   - Section-by-section suggestions
-   - Overall verdict
-
-### API to Use
-- **Claude API** (Anthropic) — recommended
-- Model: `claude-sonnet-4-20250514`
-- Called from frontend using fetch to Anthropic API
-
----
-
-## Key Rules for All Future Code
-1. Use ONLY theme.js values — no hardcoded colors/spacing/sizes
-2. Use conditional rendering for expandable cards (not maxHeight animation)
-3. All builder form screens follow the same pattern as experience.js
-4. `paddingBottom: insets.bottom + 60` on all ScrollView contentContainerStyle
-5. Import paths from `builder/` folder: `../../../../constants/theme`
-6. Import paths from `builder/` folder: `../../../../store/resumeStore`
-7. Import paths from `builder/` folder: `../../../../services/resumeSyncService`
-8. Import paths from `(drawer)/` folder: `../../constants/theme`
-9. **handleRemove in all card screens** must call store action + `markSaved()` immediately
-10. **Chip screens** (skills, interests) must call store action immediately on remove
-11. Always call `saveActiveResumeToBackend()` after `markSaved()` in every builder screen Save button
-12. Drawer open: `navigation.dispatch(DrawerActions.openDrawer())`
-13. Never use `SafeAreaView` from react-native — use `react-native-safe-area-context`
-
----
-
-## Environment Variables (Backend .env)
-```
-PORT=3000
-MONGODB_URI=mongodb+srv://shanu21215shanu_db_user:TqwkYD9NtmnvXnLM@cvpilot.ypbsh6v.mongodb.net/cvpilot?appName=CVPilot
-JWT_SECRET=cvpilot_super_secret_jwt_key_2024
-```
+### 5. Modern + Creative Templates (v1.1)
+- Build after Play Store launch
+- 5 Modern templates
+- 5 Creative templates
 
 ---
 
 ## Backend Folder Structure
-```
 cvpilot-backend/
 ├── config/db.js
 ├── controllers/
-│   ├── authController.js     ← signup, login, getMe
-│   └── resumeController.js   ← CRUD for resumes
+│   ├── authController.js
+│   └── resumeController.js
 ├── models/
 │   ├── User.js
-│   └── Resume.js             ← full resume schema
+│   └── Resume.js
 ├── routes/
 │   ├── authRoutes.js
-│   └── resumeRoutes.js
+│   ├── resumeRoutes.js
+│   └── analyzeRoutes.js      ← Gemini analyzer route
 ├── middleware/
-│   └── authMiddleware.js     ← JWT protect middleware
+│   └── authMiddleware.js
 ├── server.js
 └── .env
-```
 
 ---
 
-## Render Deployment
-- Backend GitHub repo: https://github.com/ErrorInshanu/cvpilot-backend
+## Environment Variables
+
+### Backend (.env + Render Environment)
+PORT=3000
+MONGODB_URI=mongodb+srv://...
+JWT_SECRET=cvpilot_super_secret_jwt_key_2024
+GEMINI_API_KEY=your_gemini_key_here
+
+### Render Deployment
+- GitHub repo: https://github.com/ErrorInshanu/cvpilot-backend
 - Live URL: https://cvpilot-backend-sxut.onrender.com
-- Free tier spins down after 15 min — use UptimeRobot to keep alive
-- Deploy: push to main branch → Render auto-deploys
+- Auto-deploys on push to main branch
+
+---
+
+## Key Rules For All Future Code
+1. Use ONLY theme.js values — no hardcoded colors/spacing/sizes
+2. Use conditional rendering for expandable cards (not maxHeight)
+3. All builder screens follow experience.js pattern
+4. `paddingBottom: insets.bottom + 60` on all ScrollView
+5. Never use SafeAreaView from react-native
+6. Always call `saveActiveResumeToBackend()` after `markSaved()`
+7. Drawer open: `navigation.dispatch(DrawerActions.openDrawer())`
+8. handleRemove must call store action + markSaved() immediately
+9. Chip screens call store action immediately on remove
+10. Import expo-file-system as `expo-file-system/legacy`
+11. All array spreads use `?? []` fallback
+12. loadResume always merges with emptyResume defaults
+
+
+
+
+
+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   this is my api key name 
