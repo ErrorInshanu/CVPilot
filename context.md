@@ -523,4 +523,3 @@ GEMINI_API_KEY=your_gemini_key_here
 
 
 
-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   this is my api key name 
