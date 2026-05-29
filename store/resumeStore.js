@@ -5,7 +5,7 @@ const emptyResume = {
   id: null,
   meta: {
     title: "My Resume",
-    templateId: "classic-pro",
+    templateId: "modern-minimal",
     themeColor: "#4ADE80",
     fontFamily: "default",
   },

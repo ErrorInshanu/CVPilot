@@ -20,13 +20,13 @@ import { theme } from "../../../constants/theme";
 function ScoreRing({ score }) {
     const color =
         score >= 80 ? "#4ADE80" :
-        score >= 60 ? "#FBBF24" :
-        score >= 40 ? "#F97316" : "#FF3B30";
+            score >= 60 ? "#FBBF24" :
+                score >= 40 ? "#F97316" : "#FF3B30";
 
     const label =
         score >= 80 ? "Excellent" :
-        score >= 60 ? "Good" :
-        score >= 40 ? "Needs Work" : "Major Issues";
+            score >= 60 ? "Good" :
+                score >= 40 ? "Needs Work" : "Major Issues";
 
     return (
         <View style={styles.scoreRingWrap}>
@@ -115,34 +115,17 @@ export default function AnalyzerScreen() {
             setError(null);
             setAnalysis(null);
     
-            // Read PDF as base64 then decode to text
+            // Read PDF as base64
             const base64 = await FileSystem.readAsStringAsync(selectedFile.uri, {
                 encoding: "base64",
             });
     
-            // Decode base64 to string to extract readable text
-            const decoded = atob(base64);
-            
-            // Extract readable ASCII text from PDF binary
-            const resumeText = decoded
-                .split("")
-                .filter(c => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127)
-                .join("")
-                .replace(/[^\x20-\x7E\n]/g, " ")
-                .replace(/\s+/g, " ")
-                .trim()
-                .substring(0, 8000); // Limit to 8000 chars for Groq
-    
-            if (!resumeText || resumeText.length < 50) {
-                throw new Error("Could not extract text from PDF. Please try a different file.");
-            }
-    
-            // Send to backend
+            // Send to backend — backend handles text extraction
             const response = await fetch(ENDPOINTS.analyze, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    resumeText,
+                    resumePdfBase64: base64,
                     jobDescription: jobDescription.trim() || null,
                 }),
             });
