@@ -258,10 +258,10 @@ export default function SignIn() {
                 data.accessToken ??
                 data.access_token ??
                 null;
-            const userPayload =
+                const userPayload =
                 data.user ??
                 data.profile ??
-                (email.trim() ? { email: email.trim() } : null);
+                (data.name || data.email ? { name: data.name, email: data.email } : null);
 
             if (!token) {
                 showToast("Invalid server response.", "error");

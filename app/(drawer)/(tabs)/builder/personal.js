@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 import { useResumeStore } from "../../../../store/resumeStore";
 
 function readPersonalFromStore() {
@@ -123,7 +124,7 @@ export default function PersonalInfoScreen() {
     setForm((prev) => ({ ...prev, [key]: text }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     updatePersonal({
       fullName: form.fullName.trim(),
       jobTitle: form.jobTitle.trim(),
@@ -136,7 +137,7 @@ export default function PersonalInfoScreen() {
       summary: form.summary.trim(),
     });
     markSaved();
-
+    await saveActiveResumeToBackend();
     savedOpacity.setValue(0);
     Animated.sequence([
       Animated.timing(savedOpacity, {

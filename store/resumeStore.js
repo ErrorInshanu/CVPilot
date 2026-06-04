@@ -6,8 +6,10 @@ const emptyResume = {
   meta: {
     title: "My Resume",
     templateId: "modern-minimal",
-    themeColor: "#4ADE80",
+    themeColor: "#1E3A5F",
     fontFamily: "default",
+    fontSize: "medium",  
+
   },
   personal: {
     fullName: "",

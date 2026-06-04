@@ -20,12 +20,18 @@ import { saveActiveResumeToBackend } from "../../../services/resumeSyncService";
 import { useResumeStore } from "../../../store/resumeStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = (SCREEN_WIDTH - 48 - 12) / 2;
+const CARD_WIDTH  = (SCREEN_WIDTH - 48 - 12) / 2;
 const CARD_HEIGHT = CARD_WIDTH * 1.41;
+
+// Scale factor — WebView renders at 2x then we scale down to 0.5
+// so the full A4 page fits inside the small card
+const WEBVIEW_SCALE = 0.5;
+const WEBVIEW_W = CARD_WIDTH  / WEBVIEW_SCALE;
+const WEBVIEW_H = CARD_HEIGHT / WEBVIEW_SCALE;
 
 // ─── Sample Resume Data ───────────────────────────────────────────────────────
 const sampleResume = {
-    meta: { title: "Sample", templateId: "classic-clean", themeColor: "#4ADE80", fontFamily: "default" },
+    meta: { title: "Sample", templateId: "classic-clean", themeColor: "#1E3A5F", fontFamily: "default" },
     personal: {
         fullName: "John Anderson",
         jobTitle: "Software Engineer",
@@ -59,10 +65,14 @@ const sampleResume = {
         },
     ],
     skills: [
-        { id: "1", name: "React Native" }, { id: "2", name: "Node.js" },
-        { id: "3", name: "MongoDB" }, { id: "4", name: "Python" },
-        { id: "5", name: "AWS" }, { id: "6", name: "Docker" },
-        { id: "7", name: "TypeScript" }, { id: "8", name: "GraphQL" },
+        { id: "1", name: "React Native", level: "expert" },
+        { id: "2", name: "Node.js",      level: "expert" },
+        { id: "3", name: "MongoDB",      level: "intermediate" },
+        { id: "4", name: "Python",       level: "intermediate" },
+        { id: "5", name: "AWS",          level: "intermediate" },
+        { id: "6", name: "Docker",       level: "beginner" },
+        { id: "7", name: "TypeScript",   level: "expert" },
+        { id: "8", name: "GraphQL",      level: "beginner" },
     ],
     projects: [
         {
@@ -74,7 +84,7 @@ const sampleResume = {
         },
     ],
     certifications: [
-        { id: "1", name: "AWS Solutions Architect", issuer: "Amazon", issueDate: "2023" },
+        { id: "1", name: "AWS Solutions Architect", issuer: "Amazon",  issueDate: "2023" },
         { id: "2", name: "Google Cloud Professional", issuer: "Google", issueDate: "2022" },
     ],
     languages: [
@@ -89,7 +99,8 @@ const sampleResume = {
         { id: "1", title: "Advanced React Patterns", organization: "Frontend Masters", date: "2023" },
     ],
     interests: [
-        { id: "1", name: "Open Source" }, { id: "2", name: "AI/ML" },
+        { id: "1", name: "Open Source" },
+        { id: "2", name: "AI/ML" },
         { id: "3", name: "Photography" },
     ],
 };
@@ -98,123 +109,63 @@ const sampleResume = {
 const CATEGORIES = ["Classic", "Modern", "Creative"];
 
 const TEMPLATES = [
-    // Classic
-    {
-        id: "classic-clean", category: "Classic", name: "Classic Clean",
-        description: "Left-aligned, grey headers, 2-col skills",
-        tag: "ATS Friendly",
-    },
-    {
-        id: "classic-bold", category: "Classic", name: "Classic Bold",
-        description: "Centered name, bold caps, full divider",
-        tag: "Professional",
-    },
-    {
-        id: "classic-pro", category: "Classic", name: "Classic Pro",
-        description: "Inline company+role, pipe skills, dashes",
-        tag: "Clean",
-    },
-    {
-        id: "classic-compact", category: "Classic", name: "Classic Compact",
-        description: "Dense layout, icon contacts, fits more",
-        tag: "Compact",
-    },
-    {
-        id: "classic-ats", category: "Classic", name: "Classic ATS",
-        description: "Ultra-minimal, zero design, max ATS score",
-        tag: "Max ATS",
-    },
-    // Modern (coming soon)
-    {
-        id: "modern-sidebar", category: "Modern", name: "Modern Sidebar",
-        description: "Two-column, color sidebar, photo ready",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "modern-top", category: "Modern", name: "Modern Top",
-        description: "Bold color header band, single column",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "modern-card", category: "Modern", name: "Modern Card",
-        description: "Sections in subtle cards, clean spacing",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "modern-minimal", category: "Modern", name: "Modern Minimal",
-        description: "Lots of whitespace, elegant typography",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "modern-bold", category: "Modern", name: "Modern Bold",
-        description: "Strong color accents, section icons",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    // Creative (coming soon)
-    {
-        id: "creative-splash", category: "Creative", name: "Creative Splash",
-        description: "Full color header, bold personality",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "creative-timeline", category: "Creative", name: "Creative Timeline",
-        description: "Timeline-style experience section",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "creative-grid", category: "Creative", name: "Creative Grid",
-        description: "Grid-based skills, two-column layout",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "creative-dark", category: "Creative", name: "Creative Dark",
-        description: "Dark header background, light body",
-        tag: "Coming Soon", comingSoon: true,
-    },
-    {
-        id: "creative-portfolio", category: "Creative", name: "Creative Portfolio",
-        description: "Portfolio-style, project-first layout",
-        tag: "Coming Soon", comingSoon: true,
-    },
+    // ── Classic ──
+    { id: "classic-clean",   category: "Classic", name: "Classic Clean",   description: "Left-aligned, grey headers, 2-col skills",       tag: "ATS Friendly" },
+    { id: "classic-bold",    category: "Classic", name: "Classic Bold",    description: "Centered name, bold caps, full divider",          tag: "Professional" },
+    { id: "classic-pro",     category: "Classic", name: "Classic Pro",     description: "Inline company+role, pipe skills, dashes",        tag: "Clean"        },
+    { id: "classic-compact", category: "Classic", name: "Classic Compact", description: "Dense layout, icon contacts, fits more",          tag: "Compact"      },
+    { id: "classic-ats",     category: "Classic", name: "Classic ATS",     description: "Ultra-minimal, zero design, max ATS score",       tag: "Max ATS"      },
+
+    // ── Modern ──
+    { id: "modern-executive",  category: "Modern", name: "Modern Executive",  description: "Dark sidebar, photo, color accent",              tag: "Executive",    showcaseColor: "#1E3A5F" },
+    { id: "modern-analytical", category: "Modern", name: "Modern Analytical", description: "Color header, skill bars, two-column",           tag: "Data & Finance", showcaseColor: "#2563EB" },
+    { id: "modern-dynamic",    category: "Modern", name: "Modern Dynamic",    description: "Bold top band, left sidebar, project-focused",   tag: "Marketing",    showcaseColor: "#6D28D9" },
+    { id: "modern-minimal",    category: "Modern", name: "Modern Minimal",    description: "Elegant whitespace, thin typography",            tag: "Minimal",      showcaseColor: "#065F46" },
+    { id: "modern-bold",       category: "Modern", name: "Modern Bold",       description: "Strong color banner, skill bars, impactful",     tag: "Bold",         showcaseColor: "#991B1B" },
+
+    // ── Creative ──
+    { id: "creative-splash",    category: "Creative", name: "Creative Splash",    description: "Corner accents, large name, icon contacts",  tag: "Personality", showcaseColor: "#2563EB" },
+    { id: "creative-timeline",  category: "Creative", name: "Creative Timeline",  description: "Timeline dots, clean experience flow",        tag: "Timeline",    showcaseColor: "#6D28D9" },
+    { id: "creative-grid",      category: "Creative", name: "Creative Grid",      description: "Stacked name, circular photo, skill bars",    tag: "Grid",        showcaseColor: "#065F46" },
+    { id: "creative-dark",      category: "Creative", name: "Creative Dark",      description: "Colored border frame, dot skill ratings",     tag: "Framed",      showcaseColor: "#991B1B" },
+    { id: "creative-portfolio", category: "Creative", name: "Creative Portfolio", description: "Full-height photo panel, bold left side",     tag: "Portfolio",   showcaseColor: "#374151" },
 ];
 
 // ─── Mini Preview Card ────────────────────────────────────────────────────────
 function TemplateCard({ template, isSelected, isActive, onPress }) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
-    const html = template.comingSoon ? "" : getTemplate(template.id, sampleResume);
+
+    // Always use the template's own showcase color in the grid card
+    const cardColor = template.showcaseColor || "#1E3A5F";
+    const html = getTemplate(template.id, sampleResume, cardColor);
 
     const handlePress = () => {
         Animated.sequence([
             Animated.timing(scaleAnim, { toValue: 0.96, duration: 80, useNativeDriver: true }),
-            Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
+            Animated.timing(scaleAnim, { toValue: 1,    duration: 80, useNativeDriver: true }),
         ]).start();
         onPress(template);
     };
 
     return (
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Pressable onPress={handlePress} style={[
-                styles.card,
-                isSelected && styles.cardSelected,
-            ]}>
-                {/* Mini WebView or Coming Soon */}
+            <Pressable
+                onPress={handlePress}
+                style={[styles.card, isSelected && styles.cardSelected]}
+            >
+                {/* Mini WebView — scaled down so full CV is visible */}
                 <View style={styles.cardPreview}>
-                    {template.comingSoon ? (
-                        <View style={styles.comingSoonBox}>
-                            <Ionicons name="time-outline" size={22} color={theme.colors.textWhite30} />
-                            <Text style={styles.comingSoonText}>Coming Soon</Text>
-                        </View>
-                    ) : (
+                    <View style={styles.webScaleWrap}>
                         <WebView
                             source={{ html }}
-                            style={styles.miniWebView}
+                            style={{ width: WEBVIEW_W, height: WEBVIEW_H }}
                             scrollEnabled={false}
                             pointerEvents="none"
                             showsVerticalScrollIndicator={false}
                             originWhitelist={["*"]}
-                            scalesPageToFit={true}
+                            scalesPageToFit={false}
                         />
-                    )}
+                    </View>
 
                     {/* Active badge */}
                     {isActive && (
@@ -224,10 +175,7 @@ function TemplateCard({ template, isSelected, isActive, onPress }) {
                     )}
 
                     {/* Tag pill */}
-                    <View style={[
-                        styles.tagPill,
-                        template.comingSoon && styles.tagPillDim,
-                    ]}>
+                    <View style={styles.tagPill}>
                         <Text style={styles.tagText}>{template.tag}</Text>
                     </View>
                 </View>
@@ -249,10 +197,12 @@ function TemplateCard({ template, isSelected, isActive, onPress }) {
 function PreviewModal({ template, visible, onClose, onUse, isActive }) {
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(true);
-    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const fadeAnim  = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(60)).current;
 
-    const html = template ? getTemplate(template.id, sampleResume) : "";
+    // Modal always uses the template's own showcase color so it looks correct
+    const previewColor = template?.showcaseColor || "#1E3A5F";
+    const html = template ? getTemplate(template.id, sampleResume, previewColor) : "";
 
     useEffect(() => {
         if (visible) {
@@ -260,15 +210,11 @@ function PreviewModal({ template, visible, onClose, onUse, isActive }) {
             fadeAnim.setValue(0);
             slideAnim.setValue(60);
             Animated.parallel([
-                Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+                Animated.timing(fadeAnim,  { toValue: 1, duration: 300, useNativeDriver: true }),
                 Animated.spring(slideAnim, { toValue: 0, tension: 65, friction: 10, useNativeDriver: true }),
             ]).start();
         }
     }, [visible]);
-
-    const onLoaded = () => {
-        setLoading(false);
-    };
 
     if (!template) return null;
 
@@ -289,7 +235,7 @@ function PreviewModal({ template, visible, onClose, onUse, isActive }) {
                             <Text style={styles.modalTitle}>{template.name}</Text>
                             <Text style={styles.modalSubtitle}>{template.description}</Text>
                         </View>
-                        <View style={[styles.modalTagPill]}>
+                        <View style={styles.modalTagPill}>
                             <Text style={styles.modalTagText}>{template.tag}</Text>
                         </View>
                     </View>
@@ -307,7 +253,7 @@ function PreviewModal({ template, visible, onClose, onUse, isActive }) {
                         <WebView
                             source={{ html }}
                             style={styles.modalWebView}
-                            onLoad={onLoaded}
+                            onLoad={() => setLoading(false)}
                             scrollEnabled
                             showsVerticalScrollIndicator={false}
                             originWhitelist={["*"]}
@@ -341,10 +287,9 @@ export default function TemplatesScreen() {
     const { activeResume, updateMeta, markSaved } = useResumeStore();
 
     const [activeCategory, setActiveCategory] = useState("Classic");
-    const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [previewTemplate, setPreviewTemplate] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [successVisible, setSuccessVisible] = useState(false);
+    const [modalVisible, setModalVisible]       = useState(false);
+    const [successVisible, setSuccessVisible]   = useState(false);
     const successAnim = useRef(new Animated.Value(0)).current;
 
     const currentTemplateId = activeResume?.meta?.templateId || "classic-clean";
@@ -352,7 +297,6 @@ export default function TemplatesScreen() {
     const filtered = TEMPLATES.filter(t => t.category === activeCategory);
 
     const handleCardPress = (template) => {
-        if (template.comingSoon) return;
         setPreviewTemplate(template);
         setModalVisible(true);
     };
@@ -363,7 +307,6 @@ export default function TemplatesScreen() {
         markSaved();
         saveActiveResumeToBackend();
 
-        // Show success toast
         successAnim.setValue(0);
         setSuccessVisible(true);
         Animated.sequence([
@@ -397,7 +340,8 @@ export default function TemplatesScreen() {
                 <View style={styles.activeBannerLeft}>
                     <View style={styles.activeDot} />
                     <Text style={styles.activeBannerText}>
-                        Active: <Text style={styles.activeBannerName}>
+                        Active:{" "}
+                        <Text style={styles.activeBannerName}>
                             {TEMPLATES.find(t => t.id === currentTemplateId)?.name || "Classic Clean"}
                         </Text>
                     </Text>
@@ -407,7 +351,7 @@ export default function TemplatesScreen() {
 
             {/* ── Category Tabs ── */}
             <View style={styles.tabsRow}>
-                {CATEGORIES.map((cat) => (
+                {CATEGORIES.map(cat => (
                     <Pressable
                         key={cat}
                         style={[styles.tab, activeCategory === cat && styles.tabActive]}
@@ -424,8 +368,8 @@ export default function TemplatesScreen() {
             {/* ── Category Description ── */}
             <View style={styles.catDescRow}>
                 <Text style={styles.catDesc}>
-                    {activeCategory === "Classic" && "ATS-optimized layouts for CS, IT & Engineering"}
-                    {activeCategory === "Modern" && "Color-accent designs for MBA, BBA & Marketing"}
+                    {activeCategory === "Classic"  && "ATS-optimized layouts for CS, IT & Engineering"}
+                    {activeCategory === "Modern"   && "Color-accent designs for MBA, BBA & Marketing"}
                     {activeCategory === "Creative" && "Bold layouts for Design, Arts & Media"}
                 </Text>
             </View>
@@ -433,7 +377,7 @@ export default function TemplatesScreen() {
             {/* ── Template Grid ── */}
             <FlatList
                 data={filtered}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
                 contentContainerStyle={styles.grid}
@@ -487,8 +431,6 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.bgRoot,
         marginTop: -40,
     },
-
-    // Header
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -524,8 +466,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: theme.colors.accentGreen,
     },
-
-    // Active Banner
     activeBanner: {
         flexDirection: "row",
         alignItems: "center",
@@ -558,8 +498,6 @@ const styles = StyleSheet.create({
         color: theme.colors.accentGreen,
         fontWeight: "700",
     },
-
-    // Category Tabs
     tabsRow: {
         flexDirection: "row",
         paddingHorizontal: 20,
@@ -591,8 +529,6 @@ const styles = StyleSheet.create({
         borderRadius: 2,
         backgroundColor: theme.colors.accentGreen,
     },
-
-    // Category description
     catDescRow: {
         paddingHorizontal: 20,
         marginBottom: 14,
@@ -601,8 +537,6 @@ const styles = StyleSheet.create({
         fontSize: 11.5,
         color: theme.colors.textWhite40,
     },
-
-    // Grid
     grid: {
         paddingHorizontal: 20,
         paddingBottom: 32,
@@ -612,7 +546,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
 
-    // Card
+    // ── Card ──
     card: {
         width: CARD_WIDTH,
         borderRadius: theme.radii.md,
@@ -626,27 +560,21 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
     },
     cardPreview: {
-        width: "100%",
+        width: CARD_WIDTH,
         height: CARD_HEIGHT,
-        backgroundColor: "#ffffff",
         overflow: "hidden",
+        backgroundColor: "#ffffff",
         position: "relative",
     },
-    miniWebView: {
-        flex: 1,
-        backgroundColor: "#ffffff",
-    },
-    comingSoonBox: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#f5f5f5",
-        gap: 6,
-    },
-    comingSoonText: {
-        fontSize: 10,
-        color: "#999",
-        fontWeight: "600",
+    // Scale wrapper — renders full CV at 2x size then scales down to 0.5
+    webScaleWrap: {
+        width: WEBVIEW_W,
+        height: WEBVIEW_H,
+        transform: [{ scale: WEBVIEW_SCALE }],
+        transformOrigin: "top left",
+        position: "absolute",
+        top: 0,
+        left: 0,
     },
     activeBadge: {
         position: "absolute",
@@ -655,6 +583,7 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.bgRoot,
         borderRadius: 10,
         padding: 1,
+        zIndex: 10,
     },
     tagPill: {
         position: "absolute",
@@ -664,9 +593,7 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         paddingHorizontal: 6,
         paddingVertical: 2,
-    },
-    tagPillDim: {
-        backgroundColor: "rgba(255,255,255,0.15)",
+        zIndex: 10,
     },
     tagText: {
         fontSize: 8.5,
@@ -679,6 +606,7 @@ const styles = StyleSheet.create({
         borderRadius: theme.radii.md,
         borderWidth: 2,
         borderColor: theme.colors.accentGreen,
+        zIndex: 10,
     },
     cardInfo: {
         padding: 10,
@@ -695,7 +623,7 @@ const styles = StyleSheet.create({
         lineHeight: 13,
     },
 
-    // Modal
+    // ── Modal ──
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.85)",
@@ -729,9 +657,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    modalTitleWrap: {
-        flex: 1,
-    },
+    modalTitleWrap: { flex: 1 },
     modalTitle: {
         fontSize: 16,
         fontWeight: "800",
@@ -812,8 +738,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: theme.colors.accentGreen,
     },
-
-    // Toast
     toast: {
         position: "absolute",
         alignSelf: "center",
