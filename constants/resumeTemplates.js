@@ -2243,12 +2243,9 @@ function buildModernAnalytical(resume, themeColor = "#1E3A5F") {
   
     <!-- Header -->
     <div class="header">
-      <div class="photo-box">
-        ${photo
-            ? `<img src="${photo}" class="photo-img" />`
-            : `<span class="photo-initials">${initials}</span>`
-        }
-      </div>
+    ${photo ? `<div class="photo-box">
+      <img src="${photo}" class="photo-img" />
+    </div>` : ""}
       <div class="header-info">
         <div class="header-name">${name}</div>
         ${jobTitle ? `<div class="header-title">${jobTitle}</div>` : ""}
@@ -2592,12 +2589,9 @@ function buildModernDynamic(resume, themeColor = "#1E3A5F") {
   
     <!-- Top Band -->
     <div class="top-band">
-      <div class="photo-box">
-        ${photo
-            ? `<img src="${photo}" class="photo-img" />`
-            : `<span class="photo-initials">${initials}</span>`
-        }
-      </div>
+    ${photo ? `<div class="photo-box">
+      <img src="${photo}" class="photo-img" />
+    </div>` : ""}
       <div>
         <div class="band-name">${name}</div>
         ${jobTitle ? `<div class="band-title">${jobTitle}</div>` : ""}
@@ -2963,12 +2957,9 @@ function buildModernMinimal(resume, themeColor = "#1E3A5F") {
   
     <!-- Header -->
     <div class="header">
-      <div class="photo-box">
-        ${photo
-            ? `<img src="${photo}" class="photo-img" />`
-            : `<span class="photo-initials">${initials}</span>`
-        }
-      </div>
+    ${photo ? `<div class="photo-box">
+      <img src="${photo}" class="photo-img" />
+    </div>` : ""}
       <div class="header-info">
         <div class="header-name">${name}</div>
         ${jobTitle ? `<div class="header-title">${jobTitle}</div>` : ""}
@@ -3358,12 +3349,9 @@ function buildModernBold(resume, themeColor = "#1E3A5F") {
     <!-- Banner -->
     <div class="banner">
       <div class="banner-top">
-        <div class="photo-box">
-          ${photo
-            ? `<img src="${photo}" class="photo-img" />`
-            : `<span class="photo-initials">${initials}</span>`
-        }
-        </div>
+      ${photo ? `<div class="photo-box">
+        <img src="${photo}" class="photo-img" />
+      </div>` : ""}
         <div class="banner-info">
           <div class="banner-name">${name}</div>
           ${jobTitle ? `<div class="banner-title">${jobTitle}</div>` : ""}
@@ -3793,9 +3781,9 @@ function buildCreativeSplash(resume, themeColor = "#1E3A5F") {
         ${website ? `<span class="contact-item"><span class="contact-icon">⊕</span> ${website}</span>` : ""}
       </div>
     </div>
-    <div class="photo-box">
-      ${photo ? `<img src="${photo}" class="photo-img"/>` : `<span class="photo-initials">${initials}</span>`}
-    </div>
+    ${photo ? `<div class="photo-box">
+      <img src="${photo}" class="photo-img" />
+    </div>` : ""}
   </div>
 
   ${summarySection}
@@ -4075,9 +4063,9 @@ function buildCreativeTimeline(resume, themeColor = "#1E3A5F") {
 </head>
 <body>
 <div class="header">
-  <div class="photo-box">
-    ${photo ? `<img src="${photo}" class="photo-img"/>` : `<span class="photo-initials">${initials}</span>`}
-  </div>
+${photo ? `<div class="photo-box">
+  <img src="${photo}" class="photo-img" />
+</div>` : ""}
   <div class="header-info">
     <div class="header-name">${name}</div>
     ${jobTitle ? `<div class="header-title">${jobTitle}</div>` : ""}
@@ -4688,9 +4676,9 @@ function buildCreativeDark(resume, themeColor = "#1E3A5F") {
   <!-- Header -->
   <div class="header">
     <div class="header-top">
-      <div class="photo-box">
-        ${photo ? `<img src="${photo}" class="photo-img"/>` : `<span class="photo-initials">${initials}</span>`}
-      </div>
+    ${photo ? `<div class="photo-box">
+      <img src="${photo}" class="photo-img" />
+    </div>` : ""}
       <div class="header-text">
         <div class="header-name">${name}</div>
         ${jobTitle ? `<div class="header-title">${jobTitle}</div>` : ""}

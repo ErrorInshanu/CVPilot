@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -31,7 +33,15 @@ function readPersonalFromStore() {
     github: p.github ?? "",
     website: p.website ?? "",
     summary: p.summary ?? "",
+    photo: p.photo ?? null,
   };
+}
+
+function getInitials(name) {
+  if (!name || !name.trim()) return "?";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function LabeledInput({
@@ -95,7 +105,6 @@ export default function PersonalInfoScreen() {
   const [focusedKey, setFocusedKey] = useState(null);
   const saveScale = useRef(new Animated.Value(1)).current;
   const savedOpacity = useRef(new Animated.Value(0)).current;
-
   const screenEnter = useRef(new Animated.Value(0)).current;
 
   useFocusEffect(
@@ -124,6 +133,30 @@ export default function PersonalInfoScreen() {
     setForm((prev) => ({ ...prev, [key]: text }));
   };
 
+  // ── Photo picker ──────────────────────────────────────────────
+  const handlePhotoPick = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.base64) {
+      const base64 = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      patchField("photo", base64);
+    }
+  };
+
+  const handlePhotoRemove = () => {
+    patchField("photo", null);
+  };
+  // ─────────────────────────────────────────────────────────────
+
   const handleSave = async () => {
     updatePersonal({
       fullName: form.fullName.trim(),
@@ -135,6 +168,7 @@ export default function PersonalInfoScreen() {
       github: form.github.trim(),
       website: form.website.trim(),
       summary: form.summary.trim(),
+      photo: form.photo ?? null,
     });
     markSaved();
     await saveActiveResumeToBackend();
@@ -206,6 +240,7 @@ export default function PersonalInfoScreen() {
               },
             ]}
           >
+            {/* Top Bar */}
             <View style={styles.topBar}>
               <Pressable
                 onPress={() => router.back()}
@@ -227,6 +262,75 @@ export default function PersonalInfoScreen() {
             <Text style={styles.screenSub}>
               Name, contact details, and professional summary
             </Text>
+
+            {/* ── Photo Section ─────────────────────────────── */}
+            <View style={styles.photoSection}>
+              <Text style={styles.photoLabel}>
+                Profile Photo{" "}
+                <Text style={styles.photoLabelOptional}>(Optional)</Text>
+              </Text>
+              <Text style={styles.photoHint}>
+                Used in modern & creative templates only
+              </Text>
+
+              <View style={styles.photoRow}>
+                {/* Avatar */}
+                <Pressable onPress={handlePhotoPick} style={styles.avatarWrap}>
+                  {form.photo ? (
+                    <Image
+                      source={{ uri: form.photo }}
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarInitials}>
+                        {getInitials(form.fullName)}
+                      </Text>
+                    </View>
+                  )}
+                  {/* Camera badge */}
+                  <View style={styles.cameraBadge}>
+                    <Ionicons
+                      name="camera"
+                      size={13}
+                      color={theme.colors.bgRoot}
+                    />
+                  </View>
+                </Pressable>
+
+                {/* Buttons */}
+                <View style={styles.photoActions}>
+                  <Pressable
+                    onPress={handlePhotoPick}
+                    style={styles.photoUploadBtn}
+                  >
+                    <Ionicons
+                      name="image-outline"
+                      size={16}
+                      color={theme.colors.accentGreen}
+                    />
+                    <Text style={styles.photoUploadBtnText}>
+                      {form.photo ? "Change Photo" : "Upload Photo"}
+                    </Text>
+                  </Pressable>
+
+                  {form.photo && (
+                    <Pressable
+                      onPress={handlePhotoRemove}
+                      style={styles.photoRemoveBtn}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={theme.colors.dotRed}
+                      />
+                      <Text style={styles.photoRemoveBtnText}>Remove</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </View>
+            {/* ─────────────────────────────────────────────── */}
 
             <View style={styles.formCard}>
               <LabeledInput
@@ -440,6 +544,120 @@ const styles = StyleSheet.create({
     marginTop: -theme.spacing.xs,
     marginBottom: theme.spacing.xs,
   },
+
+  // ── Photo Section ───────────────────────────────────────────
+  photoSection: {
+    backgroundColor: theme.colors.cardBg04,
+    borderRadius: theme.radii.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder07,
+    padding: theme.spacing["2xl"],
+    gap: theme.spacing.sm,
+  },
+  photoLabel: {
+    fontSize: theme.typography.md,
+    fontWeight: "700",
+    color: theme.colors.textWhite70,
+    letterSpacing: theme.typography.letterSpacingMd,
+  },
+  photoLabelOptional: {
+    fontWeight: "400",
+    color: theme.colors.textWhite40,
+  },
+  photoHint: {
+    fontSize: theme.typography.xs,
+    color: theme.colors.textWhite32,
+    letterSpacing: theme.typography.letterSpacingMd,
+    marginTop: -theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  photoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing["2xl"],
+  },
+  avatarWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.radii.md,
+    position: "relative",
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.radii.md,
+    borderWidth: 2,
+    borderColor: theme.colors.accentGreen,
+  },
+  avatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.mintBg09,
+    borderWidth: 1.5,
+    borderColor: theme.colors.mintBorder24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarInitials: {
+    fontSize: theme.typography.xl,
+    fontWeight: "800",
+    color: theme.colors.accentGreen,
+    letterSpacing: 1,
+  },
+  cameraBadge: {
+    position: "absolute",
+    bottom: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.accentGreen,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: theme.colors.bgRoot,
+  },
+  photoActions: {
+    flex: 1,
+    gap: theme.spacing.sm,
+  },
+  photoUploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radii.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.mintBorder24,
+    backgroundColor: theme.colors.mintBg09,
+  },
+  photoUploadBtnText: {
+    fontSize: theme.typography.md,
+    fontWeight: "600",
+    color: theme.colors.accentGreen,
+    letterSpacing: theme.typography.letterSpacingMd,
+  },
+  photoRemoveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radii.sm,
+    borderWidth: 1,
+    borderColor: "rgba(255,59,48,0.2)",
+    backgroundColor: "rgba(255,59,48,0.06)",
+  },
+  photoRemoveBtnText: {
+    fontSize: theme.typography.md,
+    fontWeight: "600",
+    color: theme.colors.dotRed,
+    letterSpacing: theme.typography.letterSpacingMd,
+  },
+  // ───────────────────────────────────────────────────────────
+
   formCard: {
     backgroundColor: theme.colors.cardBg04,
     borderRadius: theme.radii.lg,

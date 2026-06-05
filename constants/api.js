@@ -7,4 +7,8 @@ export const ENDPOINTS = {
   resumes: `${API_BASE_URL}/api/resumes`,
   resume:  (id) => `${API_BASE_URL}/api/resumes/${id}`,
   analyze: `${API_BASE_URL}/api/analyze`,
+
+  updateProfile:   `${API_BASE_URL}/api/auth/update`,
+  changePassword:  `${API_BASE_URL}/api/auth/password`,
+  deleteAccount:   `${API_BASE_URL}/api/auth/delete`,
 };
