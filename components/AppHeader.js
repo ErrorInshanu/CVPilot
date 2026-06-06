@@ -18,11 +18,11 @@ export function AppHeader({ title, rightAction }) {
     const right =
         rightAction ?? (
             <Pressable hitSlop={12} accessibilityRole="button" accessibilityLabel="Profile">
-                <Ionicons
+                {/* <Ionicons
                     name="person-circle-outline"
                     size={26}
                     color={theme.colors.textWhite55}
-                />
+                /> */}
             </Pressable>
         );
 

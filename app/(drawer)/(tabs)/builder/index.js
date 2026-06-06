@@ -9,9 +9,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View
 } from "react-native";
 import { theme } from "../../../../constants/theme";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 import { useResumeStore } from "../../../../store/resumeStore";
 
 // ─── Section config ───────────────────────────────────────────────────────────
@@ -234,7 +236,12 @@ function SectionRow({ section, isComplete, index, masterAnim, onPress }) {
 // ─── Main Builder Screen ──────────────────────────────────────────────────────
 export default function BuilderScreen() {
   const router = useRouter();
-  const { createNewResume } = useResumeStore();
+  const { createNewResume, updateMeta, markSaved } = useResumeStore();
+
+  // ── Title editing state ──
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState("");
+  const titleInputRef = useRef(null);
 
   // ✅ FIX 1 — read fresh from store on every render
   const [, forceUpdate] = useState(0);
@@ -288,6 +295,27 @@ export default function BuilderScreen() {
     ]).start();
   }, []);
 
+  // ── Title edit handlers ──
+  const handlePencilPress = () => {
+    setTitleInput(resumeTitle);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 50);
+  };
+
+  const handleTitleConfirm = async () => {
+    const trimmed = titleInput.trim();
+    const finalTitle = trimmed.length > 0 ? trimmed : resumeTitle;
+    updateMeta({ title: finalTitle });
+    markSaved();
+    setIsEditingTitle(false);
+    await saveActiveResumeToBackend();
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setTitleInput("");
+  };
+
   const handleSectionPress = (sectionId) => {
     router.push(`/(drawer)/(tabs)/builder/${sectionId}`);
   };
@@ -331,12 +359,46 @@ export default function BuilderScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.resumeTitleWrap}>
+          {/* ── Resume Title Row ── */}
+          <View style={[
+            styles.resumeTitleWrap,
+            isEditingTitle && styles.resumeTitleWrapActive,
+          ]}>
             <Ionicons name="document-text-outline" size={16} color={theme.colors.textWhite40} />
-            <Text style={styles.resumeTitleText}>{resumeTitle}</Text>
-            <Pressable hitSlop={8}>
-              <Ionicons name="pencil-outline" size={14} color={theme.colors.textWhite40} />
-            </Pressable>
+
+            {isEditingTitle ? (
+              // ── Editing mode ──
+              <>
+                <TextInput
+                  ref={titleInputRef}
+                  style={styles.resumeTitleInput}
+                  value={titleInput}
+                  onChangeText={setTitleInput}
+                  placeholder="Resume name..."
+                  placeholderTextColor={theme.colors.textWhite30}
+                  maxLength={40}
+                  returnKeyType="done"
+                  onSubmitEditing={handleTitleConfirm}
+                  autoCorrect={false}
+                />
+                {/* Cancel */}
+                <Pressable onPress={handleTitleCancel} hitSlop={8} style={styles.titleActionBtn}>
+                  <Ionicons name="close-outline" size={18} color={theme.colors.textWhite40} />
+                </Pressable>
+                {/* Confirm */}
+                <Pressable onPress={handleTitleConfirm} hitSlop={8} style={styles.titleActionBtn}>
+                  <Ionicons name="checkmark-outline" size={18} color={theme.colors.accentGreen} />
+                </Pressable>
+              </>
+            ) : (
+              // ── Display mode ──
+              <>
+                <Text style={styles.resumeTitleText} numberOfLines={1}>{resumeTitle}</Text>
+                <Pressable onPress={handlePencilPress} hitSlop={8}>
+                  <Ionicons name="pencil-outline" size={14} color={theme.colors.textWhite40} />
+                </Pressable>
+              </>
+            )}
           </View>
         </Animated.View>
 
@@ -450,16 +512,31 @@ const styles = StyleSheet.create({
     borderColor: "rgba(74,222,128,0.3)", backgroundColor: "rgba(74,222,128,0.08)",
   },
   previewBtnText: { fontSize: theme.typography.sm, fontWeight: "600", color: theme.colors.accentGreen },
+
+  // ── Title row ──
   resumeTitleWrap: {
     flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: theme.colors.cardBg04, borderRadius: theme.radii.sm,
     borderWidth: 1, borderColor: theme.colors.cardBorder07,
     paddingVertical: 10, paddingHorizontal: theme.spacing.md,
   },
+  resumeTitleWrapActive: {
+    borderColor: theme.colors.inputFocusBorder45,
+    backgroundColor: theme.colors.inputFocusBg04,
+  },
   resumeTitleText: {
     flex: 1, fontSize: theme.typography.md,
     color: theme.colors.textWhite60, letterSpacing: theme.typography.letterSpacingMd,
   },
+  resumeTitleInput: {
+    flex: 1, fontSize: theme.typography.md,
+    color: theme.colors.white, letterSpacing: theme.typography.letterSpacingMd,
+    paddingVertical: 0, // keeps height consistent
+  },
+  titleActionBtn: {
+    paddingHorizontal: 4,
+  },
+
   progressCard: {
     backgroundColor: theme.colors.cardBg04, borderRadius: theme.radii.lg,
     borderWidth: 1, borderColor: theme.colors.cardBorder07,
