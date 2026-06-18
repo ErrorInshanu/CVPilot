@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import {
     Animated,
@@ -19,6 +21,16 @@ import Svg, { Path } from "react-native-svg";
 import { ENDPOINTS } from "../../constants/api";
 import { theme } from "../../constants/theme";
 import { useAuth } from "../../hooks/useAuth";
+
+// ─── Required for expo-auth-session on Android ───────────────────────────────
+WebBrowser.maybeCompleteAuthSession();
+
+// ─── Google OAuth Config ──────────────────────────────────────────────────────
+const GOOGLE_CLIENT_ID = "528611987830-crie0uq494fcs4uu211j9qopsmgr57ed.apps.googleusercontent.com";
+const discovery = {
+    authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenEndpoint: "https://oauth2.googleapis.com/token",
+};
 
 // ─── Toast Component ──────────────────────────────────────────────────────────
 function Toast({ message, type, visible }) {
@@ -120,6 +132,7 @@ export default function SignIn() {
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
 
     // Inline errors
     const [emailError, setEmailError] = useState("");
@@ -131,6 +144,70 @@ export default function SignIn() {
     const showToast = (message, type = "success") => {
         setToast({ visible: true, message, type });
         setTimeout(() => setToast((t) => ({ ...t, visible: false })), 3000);
+    };
+
+    // ── Google OAuth Setup ────────────────────────────────────────────────────
+    const redirectUri = AuthSession.makeRedirectUri({
+        scheme: "cvpilot",
+    });
+    const [request, response, promptAsync] = AuthSession.useAuthRequest(
+        {
+            clientId: GOOGLE_CLIENT_ID,
+            redirectUri,
+            scopes: ["openid", "profile", "email"],
+            responseType: "token",
+            usePKCE: false,
+        },
+        discovery
+    );
+
+    // Handle Google OAuth response
+    useEffect(() => {
+        if (response?.type === "success") {
+            const { access_token } = response.params;
+            handleGoogleToken(access_token);
+        } else if (response?.type === "error") {
+            showToast("Google sign-in failed. Please try again.", "error");
+        }
+    }, [response]);
+
+    const handleGoogleToken = async (accessToken) => {
+        setGoogleLoading(true);
+        try {
+            const res = await fetch(ENDPOINTS.googleAuth, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accessToken }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                showToast(data.message || "Google sign-in failed.", "error");
+                return;
+            }
+
+            const token = data.token ?? null;
+            const userPayload = data.user ?? {
+                name: data.name,
+                email: data.email,
+                _id: data._id,
+            };
+
+            if (!token) {
+                showToast("Invalid server response.", "error");
+                return;
+            }
+
+            await signIn(token, userPayload);
+            showToast("Welcome to CVPilot!", "success");
+            setTimeout(() => router.replace("/home"), 1000);
+
+        } catch (error) {
+            showToast("Network error. Please try again.", "error");
+        } finally {
+            setGoogleLoading(false);
+        }
     };
 
     // Entrance animations
@@ -258,10 +335,12 @@ export default function SignIn() {
                 data.accessToken ??
                 data.access_token ??
                 null;
-                const userPayload =
+            const userPayload =
                 data.user ??
                 data.profile ??
-                (data.name || data.email ? { name: data.name, email: data.email } : null);
+                (data.name || data.email
+                    ? { name: data.name, email: data.email }
+                    : null);
 
             if (!token) {
                 showToast("Invalid server response.", "error");
@@ -450,7 +529,7 @@ export default function SignIn() {
                             onPressIn={() => handlePressIn(signInScale)}
                             onPressOut={() => handlePressOut(signInScale)}
                             onPress={handleSignIn}
-                            disabled={loading}
+                            disabled={loading || googleLoading}
                             accessibilityRole="button"
                             accessibilityLabel="Sign In"
                         >
@@ -478,7 +557,8 @@ export default function SignIn() {
                         <Pressable
                             onPressIn={() => handlePressIn(googleScale)}
                             onPressOut={() => handlePressOut(googleScale)}
-                            onPress={() => {}}
+                            onPress={() => promptAsync()}
+                            disabled={!request || loading || googleLoading}
                             accessibilityRole="button"
                             accessibilityLabel="Continue with Google"
                         >
@@ -486,16 +566,23 @@ export default function SignIn() {
                                 style={[
                                     styles.googleBtn,
                                     { transform: [{ scale: googleScale }] },
+                                    googleLoading && styles.signInBtnDisabled,
                                 ]}
                             >
-                                <Svg width="20" height="20" viewBox="0 0 48 48">
-                                    <Path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                                    <Path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                                    <Path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                                    <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                                    <Path fill="none" d="M0 0h48v48H0z" />
-                                </Svg>
-                                <Text style={styles.googleBtnText}>Continue with Google</Text>
+                                {googleLoading ? (
+                                    <Text style={styles.googleBtnText}>Signing in...</Text>
+                                ) : (
+                                    <>
+                                        <Svg width="20" height="20" viewBox="0 0 48 48">
+                                            <Path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                                            <Path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                                            <Path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                                            <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                                            <Path fill="none" d="M0 0h48v48H0z" />
+                                        </Svg>
+                                        <Text style={styles.googleBtnText}>Continue with Google</Text>
+                                    </>
+                                )}
                             </Animated.View>
                         </Pressable>
                     </Animated.View>
