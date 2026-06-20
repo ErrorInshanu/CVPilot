@@ -148,8 +148,7 @@ export default function SignIn() {
 
     // ── Google OAuth Setup ────────────────────────────────────────────────────
     const redirectUri = AuthSession.makeRedirectUri({
-        scheme: "cvpilot",
-        path: "oauth2redirect",
+        native: "com.googleusercontent.apps.528611987830-o2lmcm413o5j7666497ef26shg21kufk:/oauth2redirect",
     });
     const [request, response, promptAsync] = AuthSession.useAuthRequest(
         {
