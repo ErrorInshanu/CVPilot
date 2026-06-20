@@ -155,8 +155,8 @@ export default function SignIn() {
             clientId: ANDROID_CLIENT_ID,
             redirectUri,
             scopes: ["openid", "profile", "email"],
-            responseType: "token",
-            usePKCE: false,
+            responseType: AuthSession.ResponseType.Code,
+            usePKCE: true,
         },
         discovery
     );
@@ -164,12 +164,31 @@ export default function SignIn() {
     // Handle Google OAuth response
     useEffect(() => {
         if (response?.type === "success") {
-            const { access_token } = response.params;
-            handleGoogleToken(access_token);
+            const { code } = response.params;
+            exchangeCodeForToken(code);
         } else if (response?.type === "error") {
             showToast("Google sign-in failed. Please try again.", "error");
         }
     }, [response]);
+
+    const exchangeCodeForToken = async (code) => {
+        try {
+            const tokenResult = await AuthSession.exchangeCodeAsync(
+                {
+                    clientId: ANDROID_CLIENT_ID,
+                    code,
+                    redirectUri,
+                    extraParams: {
+                        code_verifier: request?.codeVerifier,
+                    },
+                },
+                discovery
+            );
+            handleGoogleToken(tokenResult.accessToken);
+        } catch (error) {
+            showToast("Google sign-in failed. Please try again.", "error");
+        }
+    };
 
     const handleGoogleToken = async (accessToken) => {
         setGoogleLoading(true);
