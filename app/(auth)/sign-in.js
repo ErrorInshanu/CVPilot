@@ -26,7 +26,7 @@ import { useAuth } from "../../hooks/useAuth";
 WebBrowser.maybeCompleteAuthSession();
 
 // ─── Google OAuth Config ──────────────────────────────────────────────────────
-const GOOGLE_CLIENT_ID = "528611987830-crie0uq494fcs4uu211j9qopsmgr57ed.apps.googleusercontent.com";
+const ANDROID_CLIENT_ID = "528611987830-o2lmcm413o5j766497ef26shg21kufk.apps.googleusercontent.com";
 const discovery = {
     authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenEndpoint: "https://oauth2.googleapis.com/token",
@@ -148,11 +148,11 @@ export default function SignIn() {
 
     // ── Google OAuth Setup ────────────────────────────────────────────────────
     const redirectUri = AuthSession.makeRedirectUri({
-        scheme: "cvpilot",
+        native: "com.googleusercontent.apps.528611987830-o2lmcm413o5j766497ef26shg21kufk:/oauth2redirect",
     });
     const [request, response, promptAsync] = AuthSession.useAuthRequest(
         {
-            clientId: GOOGLE_CLIENT_ID,
+            clientId: ANDROID_CLIENT_ID,
             redirectUri,
             scopes: ["openid", "profile", "email"],
             responseType: "token",
