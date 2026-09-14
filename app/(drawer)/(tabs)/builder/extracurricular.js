@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -138,7 +139,7 @@ export default function ExtracurricularsScreen() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const storeIds = readExtracurricularsFromStore().map((item) => item.id);
     
     activities.forEach((item) => {
@@ -161,11 +162,12 @@ export default function ExtracurricularsScreen() {
 
     // Manual full array update fallback
     useResumeStore.setState((state) => ({
-      activeResume: { ...state.activeResume, extracurriculars: activities },
+      activeResume: { ...state.activeResume, extracurricular: activities },
       isDirty: true
     }));
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([

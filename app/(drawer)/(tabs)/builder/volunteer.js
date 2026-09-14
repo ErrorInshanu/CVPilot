@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -138,7 +139,7 @@ export default function VolunteerScreen() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const storeIds = readVolunteerFromStore().map((item) => item.id);
     
     volunteerWork.forEach((item) => {
@@ -166,6 +167,7 @@ export default function VolunteerScreen() {
     }));
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([

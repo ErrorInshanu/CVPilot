@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ENDPOINTS } from "../../../constants/api";
 import { theme } from "../../../constants/theme";
+import { getToken } from "../../../services/storage";
 
 // ─── Score Ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score }) {
@@ -115,6 +116,14 @@ export default function AnalyzerScreen() {
             setError(null);
             setAnalysis(null);
     
+            const token = await getToken();            
+            if (!token) {                                  
+                setError("You must be logged in to analyze a resume.");  
+                setAnalyzing(false);                        
+                return;                                     
+            }    
+
+
             // Read PDF as base64
             const base64 = await FileSystem.readAsStringAsync(selectedFile.uri, {
                 encoding: "base64",
@@ -123,7 +132,10 @@ export default function AnalyzerScreen() {
             // Send to backend — backend handles text extraction
             const response = await fetch(ENDPOINTS.analyze, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
                 body: JSON.stringify({
                     resumePdfBase64: base64,
                     jobDescription: jobDescription.trim() || null,

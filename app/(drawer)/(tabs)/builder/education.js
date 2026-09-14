@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 const DEGREE_CHIPS = [
   "10th (SSC)", "12th (HSC)", "Diploma", "B.Tech",
@@ -320,7 +321,7 @@ export default function EducationScreen() {
     ]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     items.forEach((item) => {
       const exists = useResumeStore.getState().activeResume.education.some((e) => e.id === item.id);
       const payload = {
@@ -338,6 +339,7 @@ export default function EducationScreen() {
       else { addEducation({ id: item.id, ...payload }); }
     });
     markSaved();
+    await saveActiveResumeToBackend();
     savedOpacity.setValue(0);
     Animated.sequence([
       Animated.timing(savedOpacity, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }),

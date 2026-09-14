@@ -1,9 +1,10 @@
 import { useResumeStore } from "../store/resumeStore";
 import {
-    createResume,
-    deleteResume,
-    getResumes,
-    updateResume,
+  createResume,
+  deleteResume,
+  getResumeById,
+  getResumes,
+  updateResume,
 } from "./resumeService";
 import { getToken } from "./storage";
 
@@ -24,14 +25,27 @@ export async function loadResumesFromBackend() {
       if (!data) return { success: false, error: "Backend unavailable" };
   
       const resumes = Array.isArray(data) ? data : (data?.resumes ?? []);
-  
       const store = useResumeStore.getState();
       if (!store) return { success: false, error: "Store unavailable" };
   
       store.setResumes(resumes);
   
       if (!store.activeResume?.id && resumes.length > 0) {
-        store.loadResume(resumes[0]);
+        const summaryId = resumes[0]._id ?? resumes[0].id;
+  
+        if (summaryId) {
+          try {
+            const fullResume = await getResumeById(token, summaryId);
+            if (fullResume) {
+              store.loadResume(fullResume);
+            }
+          } catch (fetchFullError) {
+            console.warn(
+              "loadResumesFromBackend: failed to fetch full resume:",
+              fetchFullError.message
+            );
+          }
+        }
       }
   
       return { success: true, resumes };

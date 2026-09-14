@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // ─── Skill suggestions for ALL student types ─────────────────────────────────
 const SKILL_CATEGORIES = [
@@ -184,18 +185,19 @@ export default function SkillsScreen() {
     addSkillByName(inputValue);
   };
 
-  const handleRemoveSkill = (id) => {
+  const handleRemoveSkill = async (id) => {
     const updated = skills.filter((s) => s.id !== id);
     setSkills(updated);
     removeSkill(id);  // ← sync to store immediately
     markSaved();       // ← mark dirty
+    await saveActiveResumeToBackend();
   };
 
   const handleLevelChange = (id, level) => {
     setSkills((prev) => prev.map((s) => s.id === id ? { ...s, level } : s));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Clear store skills and re-add all
     skills.forEach((skill) => {
       const exists = (useResumeStore.getState().activeResume.skills ?? []).some((s) => s.id === skill.id);
@@ -207,6 +209,7 @@ export default function SkillsScreen() {
       if (!currentIds.includes(s.id)) { removeSkill(s.id); }
     });
     markSaved();
+    await saveActiveResumeToBackend();
     savedOpacity.setValue(0);
     Animated.sequence([
       Animated.timing(savedOpacity, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }),

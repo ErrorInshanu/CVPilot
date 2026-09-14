@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -128,13 +129,14 @@ export default function LanguagesScreen() {
     setLanguages((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const updated = languages.filter((item) => item.id !== id);
     setLanguages(updated);
     if (expandedId === id) setExpandedId(null);
     removeLanguageFromStore(id);  // ← sync to store
     markSaved();                   // ← mark dirty
+    await saveActiveResumeToBackend();
   };
 
   const toggleExpand = (id) => {
@@ -142,7 +144,7 @@ export default function LanguagesScreen() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const storeIds = readLanguagesFromStore().map((item) => item.id);
     
     languages.forEach((item) => {
@@ -170,6 +172,7 @@ export default function LanguagesScreen() {
     }));
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([

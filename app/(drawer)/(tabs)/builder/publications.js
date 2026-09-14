@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -126,13 +127,14 @@ export default function PublicationsScreen() {
     setPublications((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const updated = publications.filter((item) => item.id !== id);
     setPublications(updated);
     if (expandedId === id) setExpandedId(null);
     removePublicationFromStore(id);  // ← sync to store
     markSaved();                      // ← mark dirty
+    await saveActiveResumeToBackend();
   };
 
   const toggleExpand = (id) => {
@@ -140,7 +142,7 @@ export default function PublicationsScreen() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const storeIds = readPublicationsFromStore().map((item) => item.id);
     
     publications.forEach((item) => {
@@ -168,6 +170,7 @@ export default function PublicationsScreen() {
     }));
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([

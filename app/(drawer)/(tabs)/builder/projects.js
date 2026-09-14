@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -132,13 +133,14 @@ export default function ProjectsScreen() {
   };
 
   // ✅ Fixed handleRemove
-const handleRemove = (id) => {
+const handleRemove = async (id) => {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   const updated = projects.filter((p) => p.id !== id);
   setProjects(updated);
   if (expandedId === id) setExpandedId(null);
   removeProjectFromStore(id);  // ← sync to store
   markSaved();                  // ← mark dirty
+  await saveActiveResumeToBackend();
 };
 
   const toggleExpand = (id) => {
@@ -146,7 +148,7 @@ const handleRemove = (id) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Sync local state to Zustand store
     const storeIds = readProjectsFromStore().map((p) => p.id);
     
@@ -166,6 +168,7 @@ const handleRemove = (id) => {
     });
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     // Trigger save animation
     savedOpacity.setValue(0);

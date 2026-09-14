@@ -3,21 +3,22 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    KeyboardAvoidingView,
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    UIManager,
-    View,
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  UIManager,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 import { useResumeStore } from "../../../../store/resumeStore";
 
 // Enable LayoutAnimation for Android
@@ -124,18 +125,21 @@ export default function AchievementsScreen() {
     setAchievements((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setAchievements((prev) => prev.filter((item) => item.id !== id));
     if (expandedId === id) setExpandedId(null);
-  };
 
+    removeAchievementFromStore(id);
+    markSaved();
+    await saveActiveResumeToBackend();
+};
   const toggleExpand = (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const storeIds = readAchievementsFromStore().map((item) => item.id);
     
     achievements.forEach((item) => {
@@ -164,6 +168,7 @@ export default function AchievementsScreen() {
     }));
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([

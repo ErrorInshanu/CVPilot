@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -124,7 +125,7 @@ export default function TrainingScreen() {
     setTrainingList((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const updated = trainingList.filter((item) => item.id !== id);
     setTrainingList(updated);
@@ -133,6 +134,7 @@ export default function TrainingScreen() {
     // ← these 2 lines sync to store immediately
     removeTrainingFromStore(id);
     markSaved();
+    await saveActiveResumeToBackend();
   };
 
   const toggleExpand = (id) => {
@@ -140,7 +142,7 @@ export default function TrainingScreen() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const storeIds = readTrainingFromStore().map((item) => item.id);
     
     trainingList.forEach((item) => {
@@ -168,6 +170,7 @@ export default function TrainingScreen() {
     }));
 
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([

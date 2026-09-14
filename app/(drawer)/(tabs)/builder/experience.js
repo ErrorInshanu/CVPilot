@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function normalizeExperienceList(list) {
@@ -268,14 +269,15 @@ export default function ExperienceScreen() {
     setExpandedById((prev) => ({ ...prev, [row.id]: true }));
   };
 
-  const confirmDelete = (row) => {
+  const confirmDelete = async (row) => {
     Alert.alert("Remove experience?", "This will remove this entry from your resume.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete", style: "destructive",
-        onPress: () => {
+        onPress: async () => {
           removeExperience(row.id);
           markSaved();
+          await saveActiveResumeToBackend();
           setItems((prev) => prev.filter((x) => x.id !== row.id));
           setExpandedById((prev) => { const n = { ...prev }; delete n[row.id]; return n; });
         },
@@ -283,7 +285,7 @@ export default function ExperienceScreen() {
     ]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     items.forEach((item) => {
       const exists = useResumeStore.getState().activeResume.experience.some((e) => e.id === item.id);
       const payload = {
@@ -300,6 +302,7 @@ export default function ExperienceScreen() {
       else { addExperience({ id: item.id, ...payload }); }
     });
     markSaved();
+    await saveActiveResumeToBackend();
     savedOpacity.setValue(0);
     Animated.sequence([
       Animated.timing(savedOpacity, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }),

@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { useResumeStore } from "../../../../store/resumeStore";
+import { saveActiveResumeToBackend } from "../../../../services/resumeSyncService";
 
 // ─── Suggestion Categories ────────────────────────────────────────────────────
 const INTEREST_CATEGORIES = [
@@ -221,9 +222,10 @@ export default function InterestsScreen() {
   };
 
   // ✅ Fixed save — uses proper Zustand action
-  const handleSave = () => {
+  const handleSave = async () => {
     updateInterests(interests);
     markSaved();
+    await saveActiveResumeToBackend();
 
     savedOpacity.setValue(0);
     Animated.sequence([
