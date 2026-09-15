@@ -29,7 +29,7 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function readExtracurricularsFromStore() {
-  return useResumeStore.getState().activeResume.extracurriculars ?? [];
+  return useResumeStore.getState().activeResume.extracurricular ?? [];
 }
 
 function newExtracurricularItem() {
@@ -128,10 +128,14 @@ export default function ExtracurricularsScreen() {
     setActivities((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setActivities((prev) => prev.filter((item) => item.id !== id));
     if (expandedId === id) setExpandedId(null);
+
+    removeExtracurricularFromStore(id);
+    markSaved();
+    await saveActiveResumeToBackend();
   };
 
   const toggleExpand = (id) => {

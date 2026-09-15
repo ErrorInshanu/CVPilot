@@ -160,6 +160,59 @@ function buildClassicClean(resume) {
           </div>`).join("")}
       </div>` : "";
 
+    // ── Extracurricular ──
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.role || "")}</span>
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Volunteer ──
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.role || "")}</span>
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Publications ──
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">PUBLICATIONS</div>
+        ${resume.publications.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.title || "")}</span>
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-link">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
     // ── Training ──
     const trainingSection = resume.training?.length > 0 ? `
       <div class="section">
@@ -337,6 +390,9 @@ function buildClassicClean(resume) {
     ${projectsSection}
     ${certsSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${languagesSection}
     ${interestsSection}
@@ -480,6 +536,59 @@ function buildClassicBold(resume) {
           </div>`).join("")}
       </div>` : "";
 
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="section">
+        <div class="section-title">EXTRACURRICULAR ACTIVITIES</div>
+        <div class="section-divider"></div>
+        ${resume.extracurricular.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="section">
+        <div class="section-title">VOLUNTEER EXPERIENCE</div>
+        <div class="section-divider"></div>
+        ${resume.volunteer.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="section">
+        <div class="section-title">PUBLICATIONS</div>
+        <div class="section-divider"></div>
+        ${resume.publications.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.title || "")}</div>
+                ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-link">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
     const trainingSection = resume.training?.length > 0 ? `
       <div class="section">
         <div class="section-title">TRAINING & WORKSHOPS</div>
@@ -590,6 +699,9 @@ function buildClassicBold(resume) {
     ${projectsSection}
     ${certsSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${languagesSection}
     ${interestsSection}
@@ -720,6 +832,59 @@ function buildClassicPro(resume) {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="dash-bullet">- ${escapeHtml(a.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Extracurricular ──
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<span class="entry-role">, ${escapeHtml(item.organization)}</span>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="dash-bullet">- ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Volunteer ──
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<span class="entry-role">, ${escapeHtml(item.organization)}</span>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="dash-bullet">- ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Publications ──
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">PUBLICATIONS</div>
+        ${resume.publications.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.title || "")}</span>
+                ${item.publisher ? `<span class="entry-role">, ${escapeHtml(item.publisher)}</span>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="dash-bullet">Authors: ${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="dash-bullet">URL: ${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="dash-bullet">- ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -878,6 +1043,9 @@ function buildClassicPro(resume) {
     ${projectsSection}
     ${certsSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${languagesSection}
     ${interestsSection}
@@ -1016,6 +1184,59 @@ function buildClassicCompact(resume) {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="dash-bullet">- ${escapeHtml(a.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Extracurricular ──
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<span class="entry-role">, ${escapeHtml(item.organization)}</span>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="dash-bullet">- ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Volunteer ──
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<span class="entry-role">, ${escapeHtml(item.organization)}</span>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="dash-bullet">- ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Publications ──
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">PUBLICATIONS</div>
+        ${resume.publications.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.title || "")}</span>
+                ${item.publisher ? `<span class="entry-role">, ${escapeHtml(item.publisher)}</span>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="dash-bullet">Authors: ${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="dash-bullet">URL: ${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="dash-bullet">- ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -1170,6 +1391,9 @@ function buildClassicCompact(resume) {
     ${projectsSection}
     ${certsSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${languagesSection}
     ${interestsSection}
@@ -1313,6 +1537,59 @@ function buildClassicAts(resume) {
             </div>
             ${a.issuer ? `<div class="entry-subtitle">${escapeHtml(a.issuer)}</div>` : ""}
             ${a.description ? `<div class="bullet">• ${escapeHtml(a.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Extracurricular ──
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">Extracurricular Activities</div>
+        ${resume.extracurricular.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.role || "")}</span>
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="bullet">• ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Volunteer ──
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">Volunteer Experience</div>
+        ${resume.volunteer.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.role || "")}</span>
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="bullet">• ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Publications ──
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">Publications</div>
+        ${resume.publications.map((item) => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.title || "")}</span>
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-subtitle">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${item.description.split("\n").filter(l => l.trim()).map(l => `<div class="bullet">• ${l.replace(/^•\s*/, "")}</div>`).join("")}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -1461,6 +1738,9 @@ function buildClassicAts(resume) {
     ${projectsSection}
     ${certsSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${languagesSection}
     ${interestsSection}
@@ -1613,6 +1893,56 @@ function buildModernExecutive(resume, themeColor = "#1E3A5F") {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">PUBLICATIONS</div>
+        ${resume.publications.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.title || "")}</div>
+                ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-grade">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -1894,6 +2224,9 @@ function buildModernExecutive(resume, themeColor = "#1E3A5F") {
       ${educationSection}
       ${projectsSection}
       ${achievementsSection}
+      ${extracurricularSection}
+      ${volunteerSection}
+      ${publicationsSection}
       ${trainingSection}
     </div>
   
@@ -2045,6 +2378,56 @@ function buildModernAnalytical(resume, themeColor = "#1E3A5F") {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const extracurricularRight = resume.extracurricular?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const volunteerRight = resume.volunteer?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const publicationsRight = resume.publications?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">PUBLICATIONS</div>
+        ${resume.publications.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-title">${escapeHtml(item.title || "")}</span>
+                ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-grade">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -2272,6 +2655,9 @@ function buildModernAnalytical(resume, themeColor = "#1E3A5F") {
         ${educationRight}
         ${projectsRight}
         ${achievementsRight}
+        ${extracurricularRight}
+        ${volunteerRight}
+        ${publicationsRight}
       </div>
     </div>
   
@@ -2417,6 +2803,56 @@ function buildModernDynamic(resume, themeColor = "#1E3A5F") {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const extracurricularRight = resume.extracurricular?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<div class="entry-location">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const volunteerRight = resume.volunteer?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.role || "")}</span>
+                ${item.organization ? `<div class="entry-location">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const publicationsRight = resume.publications?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">PUBLICATIONS</div>
+        ${resume.publications.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <span class="entry-company">${escapeHtml(item.title || "")}</span>
+                ${item.publisher ? `<div class="entry-location">${escapeHtml(item.publisher)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="entry-role-block">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-role-block">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -2616,6 +3052,9 @@ function buildModernDynamic(resume, themeColor = "#1E3A5F") {
         ${educationRight}
         ${projectsRight}
         ${achievementsRight}
+        ${extracurricularRight}
+        ${volunteerRight}
+        ${publicationsRight}
       </div>
     </div>
   
@@ -2765,6 +3204,59 @@ function buildModernMinimal(resume, themeColor = "#1E3A5F") {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Extracurricular ──
+    const extracurricularSection = resume.extracurricular?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">Extracurricular Activities</div>
+        ${resume.extracurricular.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Volunteer ──
+    const volunteerSection = resume.volunteer?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">Volunteer Experience</div>
+        ${resume.volunteer.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    // ── Publications ──
+    const publicationsSection = resume.publications?.length > 0 ? `
+      <div class="section">
+        <div class="section-header">Publications</div>
+        ${resume.publications.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.title || "")}</div>
+                ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-grade">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -2976,6 +3468,9 @@ function buildModernMinimal(resume, themeColor = "#1E3A5F") {
     ${projectsSection}
     ${certsSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${languagesSection}
     ${interestsSection}
@@ -3129,6 +3624,56 @@ function buildModernBold(resume, themeColor = "#1E3A5F") {
               <div class="entry-date">${escapeHtml(a.date || "")}</div>
             </div>
             ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const extracurricularRight = resume.extracurricular?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">EXTRACURRICULAR ACTIVITIES</div>
+        ${resume.extracurricular.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const volunteerRight = resume.volunteer?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">VOLUNTEER EXPERIENCE</div>
+        ${resume.volunteer.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.role || "")}</div>
+                ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+            </div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>`).join("")}
+      </div>` : "";
+
+    const publicationsRight = resume.publications?.length > 0 ? `
+      <div class="main-section">
+        <div class="main-title">PUBLICATIONS</div>
+        ${resume.publications.map(item => `
+          <div class="entry">
+            <div class="entry-header">
+              <div class="entry-left">
+                <div class="entry-title">${escapeHtml(item.title || "")}</div>
+                ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+              </div>
+              <div class="entry-date">${escapeHtml(item.date || "")}</div>
+            </div>
+            ${item.authors ? `<div class="entry-grade">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-grade">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
           </div>`).join("")}
       </div>` : "";
 
@@ -3377,6 +3922,9 @@ function buildModernBold(resume, themeColor = "#1E3A5F") {
         ${educationRight}
         ${projectsRight}
         ${achievementsRight}
+        ${extracurricularRight}
+        ${volunteerRight}
+        ${publicationsRight}
         ${trainingRight}
       </div>
     </div>
@@ -3503,6 +4051,47 @@ function buildCreativeSplash(resume, themeColor = "#1E3A5F") {
           <div class="entry-right-col">
             <div class="entry-title"><strong>${escapeHtml(a.title || "")}</strong>${a.issuer ? `, <span class="entry-role">${escapeHtml(a.issuer)}</span>` : ""}</div>
             ${a.description ? `<div class="entry-desc"><div class="bullet">${escapeHtml(a.description)}</div></div>` : ""}
+          </div>
+        </div>`).join("")}
+    </div>` : "";
+
+  const extracurricularSection = resume.extracurricular?.length > 0 ? `
+    <div class="section">
+      <div class="section-header"><span class="sec-icon">🌟</span> EXTRACURRICULAR ACTIVITIES</div>
+      ${resume.extracurricular.map(item => `
+        <div class="entry two-col-entry">
+          <div class="entry-left-col"><div class="entry-date-splash">${escapeHtml(item.startDate || "")}${item.startDate ? " –" : ""}<br>${item.current ? "present" : escapeHtml(item.endDate || "")}</div></div>
+          <div class="entry-right-col">
+            <div class="entry-title"><strong>${escapeHtml(item.role || "")}</strong>${item.organization ? `, <span class="entry-role">${escapeHtml(item.organization)}</span>` : ""}</div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>
+        </div>`).join("")}
+    </div>` : "";
+
+  const volunteerSection = resume.volunteer?.length > 0 ? `
+    <div class="section">
+      <div class="section-header"><span class="sec-icon">🌟</span> VOLUNTEER EXPERIENCE</div>
+      ${resume.volunteer.map(item => `
+        <div class="entry two-col-entry">
+          <div class="entry-left-col"><div class="entry-date-splash">${escapeHtml(item.startDate || "")}${item.startDate ? " –" : ""}<br>${item.current ? "present" : escapeHtml(item.endDate || "")}</div></div>
+          <div class="entry-right-col">
+            <div class="entry-title"><strong>${escapeHtml(item.role || "")}</strong>${item.organization ? `, <span class="entry-role">${escapeHtml(item.organization)}</span>` : ""}</div>
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+          </div>
+        </div>`).join("")}
+    </div>` : "";
+
+  const publicationsSection = resume.publications?.length > 0 ? `
+    <div class="section">
+      <div class="section-header"><span class="sec-icon">🌟</span> PUBLICATIONS</div>
+      ${resume.publications.map(item => `
+        <div class="entry two-col-entry">
+          <div class="entry-left-col"><div class="entry-date-splash">${escapeHtml(item.date || "")}</div></div>
+          <div class="entry-right-col">
+            <div class="entry-title"><strong>${escapeHtml(item.title || "")}</strong>${item.publisher ? `, <span class="entry-role">${escapeHtml(item.publisher)}</span>` : ""}</div>
+            ${item.authors ? `<div class="entry-subtitle">${escapeHtml(item.authors)}</div>` : ""}
+            ${item.url ? `<div class="entry-subtitle">${escapeHtml(item.url)}</div>` : ""}
+            ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
           </div>
         </div>`).join("")}
     </div>` : "";
@@ -3794,6 +4383,9 @@ function buildCreativeSplash(resume, themeColor = "#1E3A5F") {
   ${projectsSection}
   ${certsSection}
   ${achievementsSection}
+  ${extracurricularSection}
+  ${volunteerSection}
+  ${publicationsSection}
   ${trainingSection}
   ${interestsSection}
 </div>
@@ -3925,6 +4517,45 @@ function buildCreativeTimeline(resume, themeColor = "#1E3A5F") {
           escapeHtml(a.title || ""),
           escapeHtml(a.issuer || ""),
           a.description ? `<div class="bullet">• ${escapeHtml(a.description)}</div>` : ""
+        )).join("")}
+      </div>
+    </div>` : "";
+
+  const extracurricularSection = resume.extracurricular?.length > 0 ? `
+    <div class="section">
+      <div class="section-header">Extracurricular Activities</div>
+      <div class="timeline">
+        ${resume.extracurricular.map(item => timelineItem(
+          `${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}`,
+          escapeHtml(item.role || ""),
+          escapeHtml(item.organization || ""),
+          item.description ? buildBullets(item.description) : ""
+        )).join("")}
+      </div>
+    </div>` : "";
+
+  const volunteerSection = resume.volunteer?.length > 0 ? `
+    <div class="section">
+      <div class="section-header">Volunteer Experience</div>
+      <div class="timeline">
+        ${resume.volunteer.map(item => timelineItem(
+          `${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}`,
+          escapeHtml(item.role || ""),
+          escapeHtml(item.organization || ""),
+          item.description ? buildBullets(item.description) : ""
+        )).join("")}
+      </div>
+    </div>` : "";
+
+  const publicationsSection = resume.publications?.length > 0 ? `
+    <div class="section">
+      <div class="section-header">Publications</div>
+      <div class="timeline">
+        ${resume.publications.map(item => timelineItem(
+          escapeHtml(item.date || ""),
+          escapeHtml(item.title || ""),
+          `${escapeHtml(item.publisher || "")}${item.authors ? ` · ${escapeHtml(item.authors)}` : ""}${item.url ? ` · ${escapeHtml(item.url)}` : ""}`,
+          item.description ? buildBullets(item.description) : ""
         )).join("")}
       </div>
     </div>` : "";
@@ -4084,6 +4715,9 @@ ${photo ? `<div class="photo-box">
   ${certsSection}
   ${languagesSection}
   ${achievementsSection}
+  ${extracurricularSection}
+  ${volunteerSection}
+  ${publicationsSection}
   ${trainingSection}
   ${interestsSection}
 </div>
@@ -4204,6 +4838,47 @@ function buildCreativeGrid(resume, themeColor = "#1E3A5F") {
             <div class="entry-meta">${escapeHtml(proj.startDate || "")}${proj.startDate ? " – " : ""}${proj.current ? "Present" : escapeHtml(proj.endDate || "")}${proj.technologies ? ` · ${escapeHtml(proj.technologies)}` : ""}</div>
           </div>
           ${proj.description ? `<div class="entry-desc">${buildBullets(proj.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const extracurricularRight = resume.extracurricular?.length > 0 ? `
+    <div class="main-section">
+      <div class="main-title"><span class="title-icon">🎯</span> Extracurricular Activities</div>
+      ${resume.extracurricular.map(item => `
+        <div class="entry">
+          <div class="entry-top">
+            <div class="entry-title">${escapeHtml(item.organization || "")}${item.role ? `, <span class="entry-role">${escapeHtml(item.role)}</span>` : ""}</div>
+            <div class="entry-meta">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+          </div>
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const volunteerRight = resume.volunteer?.length > 0 ? `
+    <div class="main-section">
+      <div class="main-title"><span class="title-icon">🎯</span> Volunteer Experience</div>
+      ${resume.volunteer.map(item => `
+        <div class="entry">
+          <div class="entry-top">
+            <div class="entry-title">${escapeHtml(item.organization || "")}${item.role ? `, <span class="entry-role">${escapeHtml(item.role)}</span>` : ""}</div>
+            <div class="entry-meta">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+          </div>
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const publicationsRight = resume.publications?.length > 0 ? `
+    <div class="main-section">
+      <div class="main-title"><span class="title-icon">🎯</span> Publications</div>
+      ${resume.publications.map(item => `
+        <div class="entry">
+          <div class="entry-top">
+            <div class="entry-title">${escapeHtml(item.title || "")}${item.publisher ? `, <span class="entry-role">${escapeHtml(item.publisher)}</span>` : ""}</div>
+            <div class="entry-meta">${escapeHtml(item.date || "")}</div>
+          </div>
+          ${item.authors ? `<div class="entry-meta">Authors: ${escapeHtml(item.authors)}</div>` : ""}
+          ${item.url ? `<div class="entry-meta">${escapeHtml(item.url)}</div>` : ""}
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
         </div>`).join("")}
     </div>` : "";
 
@@ -4391,6 +5066,9 @@ function buildCreativeGrid(resume, themeColor = "#1E3A5F") {
   ${experienceRight}
   ${educationRight}
   ${projectsRight}
+  ${extracurricularRight}
+  ${volunteerRight}
+  ${publicationsRight}
   ${trainingRight}
 </div>
 </body>
@@ -4521,6 +5199,56 @@ function buildCreativeDark(resume, themeColor = "#1E3A5F") {
             <div class="entry-date">${escapeHtml(a.date || "")}</div>
           </div>
           ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const extracurricularSection = resume.extracurricular?.length > 0 ? `
+    <div class="section">
+      <div class="section-header"><span class="sec-icon">🌟</span> EXTRACURRICULAR ACTIVITIES</div>
+      ${resume.extracurricular.map(item => `
+        <div class="entry">
+          <div class="entry-header">
+            <div class="entry-left">
+              <span class="entry-title">${escapeHtml(item.role || "")}</span>
+              ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+            </div>
+            <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+          </div>
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const volunteerSection = resume.volunteer?.length > 0 ? `
+    <div class="section">
+      <div class="section-header"><span class="sec-icon">🌟</span> VOLUNTEER EXPERIENCE</div>
+      ${resume.volunteer.map(item => `
+        <div class="entry">
+          <div class="entry-header">
+            <div class="entry-left">
+              <span class="entry-title">${escapeHtml(item.role || "")}</span>
+              ${item.organization ? `<div class="entry-subtitle">${escapeHtml(item.organization)}</div>` : ""}
+            </div>
+            <div class="entry-date">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+          </div>
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const publicationsSection = resume.publications?.length > 0 ? `
+    <div class="section">
+      <div class="section-header"><span class="sec-icon">🌟</span> PUBLICATIONS</div>
+      ${resume.publications.map(item => `
+        <div class="entry">
+          <div class="entry-header">
+            <div class="entry-left">
+              <span class="entry-title">${escapeHtml(item.title || "")}</span>
+              ${item.publisher ? `<div class="entry-subtitle">${escapeHtml(item.publisher)}</div>` : ""}
+            </div>
+            <div class="entry-date">${escapeHtml(item.date || "")}</div>
+          </div>
+          ${item.authors ? `<div class="entry-subtitle">${escapeHtml(item.authors)}</div>` : ""}
+          ${item.url ? `<div class="entry-subtitle">${escapeHtml(item.url)}</div>` : ""}
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
         </div>`).join("")}
     </div>` : "";
 
@@ -4704,6 +5432,9 @@ function buildCreativeDark(resume, themeColor = "#1E3A5F") {
     ${certsSection}
     ${languagesSection}
     ${achievementsSection}
+    ${extracurricularSection}
+    ${volunteerSection}
+    ${publicationsSection}
     ${trainingSection}
     ${interestsSection}
   </div>
@@ -4806,6 +5537,44 @@ function buildCreativePortfolio(resume, themeColor = "#1E3A5F") {
           <div class="entry-company">${escapeHtml(a.title || "")}</div>
           ${a.issuer ? `<div class="entry-role-line">${escapeHtml(a.issuer)}</div>` : ""}
           ${a.description ? `<div class="entry-desc"><div class="bullet">• ${escapeHtml(a.description)}</div></div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const extracurricularSection = resume.extracurricular?.length > 0 ? `
+    <div class="section">
+      <div class="section-header">EXTRACURRICULAR ACTIVITIES</div>
+      ${resume.extracurricular.map(item => `
+        <div class="entry">
+          <div class="entry-company">${escapeHtml(item.role || "")}</div>
+          ${item.organization ? `<div class="entry-role-line">${escapeHtml(item.organization)}</div>` : ""}
+          <div class="entry-meta">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const volunteerSection = resume.volunteer?.length > 0 ? `
+    <div class="section">
+      <div class="section-header">VOLUNTEER EXPERIENCE</div>
+      ${resume.volunteer.map(item => `
+        <div class="entry">
+          <div class="entry-company">${escapeHtml(item.role || "")}</div>
+          ${item.organization ? `<div class="entry-role-line">${escapeHtml(item.organization)}</div>` : ""}
+          <div class="entry-meta">${escapeHtml(item.startDate || "")}${item.startDate ? " – " : ""}${item.current ? "Present" : escapeHtml(item.endDate || "")}</div>
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
+        </div>`).join("")}
+    </div>` : "";
+
+  const publicationsSection = resume.publications?.length > 0 ? `
+    <div class="section">
+      <div class="section-header">PUBLICATIONS</div>
+      ${resume.publications.map(item => `
+        <div class="entry">
+          <div class="entry-company">${escapeHtml(item.title || "")}</div>
+          ${item.publisher ? `<div class="entry-role-line">${escapeHtml(item.publisher)}</div>` : ""}
+          ${item.authors ? `<div class="entry-meta">Authors: ${escapeHtml(item.authors)}</div>` : ""}
+          ${item.date ? `<div class="entry-meta">${escapeHtml(item.date)}</div>` : ""}
+          ${item.url ? `<div class="entry-meta">${escapeHtml(item.url)}</div>` : ""}
+          ${item.description ? `<div class="entry-desc">${buildBullets(item.description)}</div>` : ""}
         </div>`).join("")}
     </div>` : "";
 
@@ -5009,6 +5778,9 @@ function buildCreativePortfolio(resume, themeColor = "#1E3A5F") {
   ${projectsSection}
   ${certsSection}
   ${achievementsSection}
+  ${extracurricularSection}
+  ${volunteerSection}
+  ${publicationsSection}
   ${trainingSection}
   ${interestsSection}
 </div>

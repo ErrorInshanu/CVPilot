@@ -128,10 +128,14 @@ export default function VolunteerScreen() {
     setVolunteerWork((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setVolunteerWork((prev) => prev.filter((item) => item.id !== id));
     if (expandedId === id) setExpandedId(null);
+
+    removeVolunteerFromStore(id);
+    markSaved();
+    await saveActiveResumeToBackend();
   };
 
   const toggleExpand = (id) => {
