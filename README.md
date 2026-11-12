@@ -1,3 +1,14 @@
+ 
+ ## Download
+
+[![Download APK](https://img.shields.io/badge/Download-Android_APK-3DDC84?logo=android&logoColor=white)](https://github.com/ErrorInshanu/CVPilot/releases/latest)
+
+1. Download the latest `.apk` from the [Releases page](https://github.com/ErrorInshanu/CVPilot/releases/latest)
+2. Open it on your Android phone
+3. If prompted, allow installs from unknown sources
+4. Note: the first request may take up to a minute while the free server wakes up
+ 
+ 
 # CVPilot
 
 **Build smarter resumes with AI.**
